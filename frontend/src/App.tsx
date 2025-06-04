@@ -7,7 +7,7 @@ function App() {
   return (
     <div className="App">
       <CopilotKit
-        publicApiKey={import.meta.env.COPILOT_PUBLIC_API_KEY || "ck_pub_ff8f4408907844499fd8114e65c13fb9"}
+        publicApiKey={import.meta.env.VITE_COPILOTKIT_PUBLIC_KEY}
       >
         <CopilotChatContainer />
       </CopilotKit>

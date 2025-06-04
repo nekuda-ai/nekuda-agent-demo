@@ -1,6 +1,5 @@
 # Placeholder for backend/checkout_service/main.py
 import uvicorn
-from typing import Dict, Any, List
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 

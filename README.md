@@ -81,8 +81,8 @@ NEKUDA_API_KEY=your_nekuda_api_key
 ANTHROPIC_API_KEY=your_anthropic_api_key
 
 # Frontend: CopilotKit Configuration (VITE_ prefix required for frontend)
-NEKUDA_PUBLIC_KEY=your_nekuda_public_key
-COPILOTKIT_PUBLIC_KEY=your_copilot_key
+VITE_NEKUDA_PUBLIC_KEY=your_nekuda_public_key
+VITE_COPILOTKIT_PUBLIC_KEY=your_copilot_key
 
 
 # Optional: Custom ports (defaults shown)
@@ -261,8 +261,8 @@ This project is for demonstration purposes. Please check with the maintainers fo
 ```bash
 cp .env.example .env
 # Edit .env with your actual API keys:
-# - NEKUDA_API_KEY (for backend payments)
-# - COPILOTKIT_PUBLIC_KEY (for frontend AI chat)
+# - VITE_NEKUDA_API_KEY (for backend payments)
+# - VITE_COPILOTKIT_PUBLIC_KEY (for frontend AI chat)
 ```
 
 **Port conflicts**

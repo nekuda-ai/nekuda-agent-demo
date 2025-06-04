@@ -45,14 +45,23 @@ fi
 echo "🔄 Activating virtual environment..."
 source .venv/bin/activate
 
-# Install/Update backend dependencies
-echo "📦 Installing/Updating backend dependencies..."
-pip install -r backend/requirements.txt
+# Install/Update checkout service dependencies
+echo "📦 Installing/Updating checkout service dependencies..."
+pip install -r backend/checkout_service/requirements.txt
 if [ $? -ne 0 ]; then
-    echo "❌ Failed to install backend dependencies"
+    echo "❌ Failed to install checkout service dependencies"
     exit 1
 fi
 echo "✅ Backend dependencies installed!"
+
+# Install playwright browsers
+echo "🌐 Installing Playwright browsers..."
+playwright install
+if [ $? -ne 0 ]; then
+    echo "⚠️  Warning: Failed to install Playwright browsers, browser automation may not work"
+else
+    echo "✅ Playwright browsers installed!"
+fi
 
 # Check if frontend node_modules exist, install if not
 if [ ! -d "frontend/node_modules" ]; then

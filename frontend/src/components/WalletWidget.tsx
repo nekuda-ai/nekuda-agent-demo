@@ -119,7 +119,7 @@ export const WalletWidget: React.FC<WalletWidgetProps> = ({ isOpen, onClose }) =
     };
 
     // Get Nekuda public key from environment variables
-    const nekudaPublicKey = import.meta.env.NEKUDA_PUBLIC_KEY || "your_nekuda_public_key_fallback";
+    const nekudaPublicKey = import.meta.env.VITE_NEKUDA_PUBLIC_KEY || "your_nekuda_public_key_fallback";
 
     // Sliding overlay from top like the example
     return (

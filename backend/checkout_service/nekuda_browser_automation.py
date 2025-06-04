@@ -118,7 +118,7 @@ Don't actually complete the purchase - after filling in all the fields, call the
         llm=llm,
         controller=controller,
         initial_actions=initial_actions,
-        use_vision=True,
+        use_vision=False,
         generate_gif=f"test_nekuda_payment_flow_{datetime.now().strftime('%Y%m%d_%H%M%S')}.gif",
     )
 

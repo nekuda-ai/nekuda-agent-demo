@@ -1,6 +1,6 @@
-# 🛍️ Nekuda AI Shopping Assistant Demo
+# 🛍️ nekuda AI Shopping Assistant Demo
 
-A modern e-commerce demonstration showcasing AI-powered shopping assistance with **Nekuda SDK** payment integration, and browser automation for seamless checkout experiences.
+A modern e-commerce demonstration showcasing AI-powered shopping assistance with **nekuda SDK** payment integration, and browser automation for seamless checkout experiences.
 
 ## 🌟 Features
 
@@ -11,7 +11,7 @@ A modern e-commerce demonstration showcasing AI-powered shopping assistance with
 - **Cart Management**: Add, remove, and view cart items through conversation
 
 ### 💳 Advanced Payment Processing
-- **Nekuda SDK Integration**: Real cryptocurrency payment processing
+- **nekuda SDK Integration**: Real cryptocurrency payment processing
 - **Browser Automation**: AI-powered automated checkout process
 - **Multi-Service Architecture**: Separate services for store and payment processing
 
@@ -32,7 +32,7 @@ A modern e-commerce demonstration showcasing AI-powered shopping assistance with
         │                       │                       │
         ▼                       ▼                       ▼
 ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   CopilotKit    │    │  Product Catalog │    │ Nekuda SDK +    │
+│   CopilotKit    │    │  Product Catalog │    │ nekuda SDK +    │
 │   AI Actions    │    │  (nekuda.json)   │    │Browser Automation│
 └─────────────────┘    └──────────────────┘    └─────────────────┘
 ```
@@ -54,7 +54,7 @@ A modern e-commerce demonstration showcasing AI-powered shopping assistance with
    # Copy the environment template
    cp .env.example .env
    
-   # Edit .env with your Nekuda SDK keys
+   # Edit .env with your nekuda SDK keys
    nano .env  # or use your preferred editor
    ```
 
@@ -76,7 +76,7 @@ A modern e-commerce demonstration showcasing AI-powered shopping assistance with
 Edit your `.env` file with your API credentials:
 
 ```env
-# Backend: Nekuda SDK Configuration
+# Backend: nekuda SDK Configuration
 NEKUDA_API_KEY=your_nekuda_api_key
 ANTHROPIC_API_KEY=your_anthropic_api_key
 
@@ -129,10 +129,10 @@ Try these natural language commands with the AI assistant:
 
 ### 🛍️ Available Products
 
-- **Nekuda T-Shirt** - Premium cotton t-shirt with Nekuda logo ($10)
-- **Nekuda Hoodie** - Comfortable fleece hoodie ($18)
-- **Nekuda Hat** - Stylish nekuda hat ($12)
-- **Nekuda Beanie** - Cozy nekuda beanie ($12)
+- **nekuda T-Shirt** - Premium cotton t-shirt with nekuda logo ($10)
+- **nekuda Hoodie** - Comfortable fleece hoodie ($18)
+- **nekuda Hat** - Stylish nekuda hat ($12)
+- **nekuda Beanie** - Cozy nekuda beanie ($12)
 
 ## 🔧 Technical Details
 
@@ -141,7 +141,7 @@ Try these natural language commands with the AI assistant:
 - **Vite** for development and building
 - **Tailwind CSS** for styling
 - **CopilotKit** for AI integration
-- **Nekuda React SDK** for payment processing
+- **nekuda React SDK** for payment processing
 
 ### Backend Stack
 - **FastAPI** for REST APIs
@@ -238,7 +238,7 @@ cd frontend && npm run dev
 ## 🔒 Security Notes
 
 - This is a **demonstration project** for development/testing
-- Uses test credentials for Nekuda SDK
+- Uses test credentials for nekuda SDK
 - Not intended for production use without proper security measures
 
 ## 🤝 Contributing
@@ -291,7 +291,7 @@ chmod +x run_scripts/start-all.sh
 
 For issues or questions:
 1. Check the troubleshooting section above
-2. Ensure your `.env` file has valid Nekuda SDK credentials
+2. Ensure your `.env` file has valid nekuda SDK credentials
 3. Verify Python 3.8+ and Node.js 18+ are installed
 4. Review console logs for specific error details
 

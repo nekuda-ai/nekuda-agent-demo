@@ -1,0 +1,41 @@
+{
+    "store_id": "nekuda",
+    "store_name": "nekuda Merchandise Store",
+    "store_url": "https://nekuda-store-frontend.onrender.com/",
+    "checkout_url": "https://nekuda-store-frontend.onrender.com/",
+    "last_updated": "2024-05-25T12:00:00Z",
+    "items": [
+        {
+            "id": "NK-001",
+            "name": "nekuda t-shirt",
+            "price": 10.00,
+            "description": "Premium cotton t-shirt with Nekuda logo",
+            "category": "apparel",
+            "image_url": "https://files.stripe.com/links/MDB8YWNjdF8xUUl6UVVMRU9aRnhHbkJIfGZsX3Rlc3RfMHp6NVBkeHB0SkVxM0trYWkxSFNiYkRO00mzoMLTT9"
+        },
+        {
+            "id": "NK-002",
+            "name": "nekuda hoodie",
+            "price": 18.00,
+            "description": "Comfortable fleece hoodie",
+            "category": "apparel",
+            "image_url": "https://files.stripe.com/links/MDB8YWNjdF8xUUl6UVVMRU9aRnhHbkJIfGZsX3Rlc3RfM1VRVTBGamtUc21TcERXVG5hTk5GbWE500SI7KKHJ0"
+        },
+        {
+            "id": "NK-003",
+            "name": "nekuda hat",
+            "price": 12.00,
+            "description": "nekuda hat",
+            "category": "accessories",
+            "image_url": "https://files.stripe.com/links/MDB8YWNjdF8xUUl6UVVMRU9aRnhHbkJIfGZsX3Rlc3RfaDdNb0hNRzJ6SUtGMm5qMVplWUhac0gw00oHaNbL7q"
+        },
+        {
+            "id": "NK-004",
+            "name": "nekuda beanie",
+            "price": 12.00,
+            "description": "nekuda beanie",
+            "category": "accessories",
+            "image_url": "https://files.stripe.com/links/MDB8YWNjdF8xUUl6UVVMRU9aRnhHbkJIfGZsX3Rlc3RfR3RBNFlHcHBWQUlsOUN4Yzl0anlkRU9L00iPDXEbTc"
+        }
+    ]
+}

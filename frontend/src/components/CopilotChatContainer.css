@@ -1,0 +1,75 @@
+.copilot-chat-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.copilot-chat-container>div {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.copilot-chat-container .copilot-chat-messages {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.copilot-chat-container .copilot-chat-input-container {
+    margin-top: auto;
+    flex-shrink: 0;
+}
+
+.copilotKitInput {
+    display: flex;
+    width: 100%;
+    height: 50px;
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+    
+}
+
+.copilot-chat-container>div {
+    background-color: rgb(243 244 246 / var(--tw-bg-opacity, 1));
+}
+
+.copilotKitMessages {
+    background-color: rgb(243 244 246 / var(--tw-bg-opacity, 1));
+    flex: 1;
+    overflow-y: auto;
+    max-height: calc(100vh - 200px);
+    /* Adjust based on header and input height */
+}
+
+.copilotKitInputContainer {
+    background-color: rgb(243 244 246 / var(--tw-bg-opacity, 1));
+    position: sticky;
+    bottom: 0;
+    flex-shrink: 0;
+    z-index: 10;
+}
+
+/* Ensure the main chat container uses proper flex layout */
+[class*="copilot-chat"] {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+}
+
+/* Force messages area to be scrollable */
+[class*="copilot-messages"],
+[class*="copilot-chat-messages"] {
+    flex: 1 !important;
+    overflow-y: auto !important;
+    min-height: 0 !important;
+}
+
+/* Force input to stay at bottom */
+[class*="copilot-input"],
+[class*="copilot-chat-input"] {
+    flex-shrink: 0 !important;
+    position: sticky !important;
+    bottom: 0 !important;
+    z-index: 10 !important;
+}

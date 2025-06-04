@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Optional: Add any global base styles or custom component styles here */
+
+body {
+    @apply bg-gray-50 text-gray-800;
+    font-family: 'Inter', sans-serif;
+    /* Ensure Inter is loaded if specified in tailwind.config.js */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbar styling (optional, for Webkit browsers) */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a1a1a1;
+}
+
+/* Styling for chat messages to match the provided CSS example (simplified) */
+.chat-message {
+    @apply p-3 rounded-lg max-w-md shadow;
+}
+
+.user-message {
+    @apply bg-blue-600 text-white ml-auto rounded-br-none;
+}
+
+.agent-message {
+    /* Default agent messages can have a slightly different style if needed */
+    /* For product cards etc, they will have their own specific styling */
+    @apply bg-white text-gray-700 mr-auto rounded-bl-none border border-gray-200;
+}
+
+/* Add specific styling for product cards or other elements if needed */
+.product-card {
+    /* Ensure this aligns with styles in ChatMessage.tsx or consolidate */
+}
+
+.product-card-sm {
+    /* Ensure this aligns with styles in ChatMessage.tsx or consolidate */
+}

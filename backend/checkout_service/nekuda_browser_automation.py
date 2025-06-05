@@ -3,8 +3,8 @@ import os
 from datetime import datetime
 from dotenv import load_dotenv
 from browser_use import Agent, Controller
-from langchain_anthropic import ChatAnthropic  # Using Google's Gemini model
-from pament_details_hander import (
+from langchain_anthropic import ChatAnthropic
+from payment_details_hander import (
     add_payment_details_handler_to_controller,
 )
 from models import OrderIntent

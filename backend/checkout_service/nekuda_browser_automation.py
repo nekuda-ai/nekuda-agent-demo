@@ -22,16 +22,14 @@ def get_llm_model(model_type="openai"):
             raise ValueError("OPENAI_API_KEY environment variable not set")
         print("Initializing LLM (OpenAI GPT-4 Mini)...")
         return ChatOpenAI(
-            model="gpt-4o-mini",
-            temperature=0.1,
-            max_tokens=4000,
-            timeout=30
+            model="gpt-4o-mini", temperature=0, max_tokens=4000, timeout=30
         )
     elif model_type.lower() == "anthropic":
         if not os.getenv("ANTHROPIC_API_KEY"):
             raise ValueError("ANTHROPIC_API_KEY environment variable not set")
         print("Initializing LLM (Claude 3.5 Sonnet)...")
         from langchain_anthropic import ChatAnthropic
+
         return ChatAnthropic(model="claude-3-5-sonnet-20240620")
     else:
         raise ValueError(f"Unsupported model type: {model_type}")
@@ -56,11 +54,15 @@ async def run_order_automation(order_intent: OrderIntent):
     print("Adding payment details handler to controller...")
     add_payment_details_handler_to_controller(controller)
 
-    # Create browser session with optimized timing settings
+    # Create browser session with optimized timing settings and larger viewport
     browser_session = BrowserSession(
         user_data_dir=None,
         headless=False,
         highlight_elements=True,
+        window_size={
+            "width": 1920,
+            "height": 1080,
+        },  # Set larger viewport to show all products
     )
 
     # 2. Setup LLM - Use OpenAI by default, can be changed to "anthropic"
@@ -72,33 +74,48 @@ async def run_order_automation(order_intent: OrderIntent):
 
     # 3. Define Initial Actions
     initial_actions = [{"go_to_url": {"url": order_intent.checkout_url}}]
+
     # 4. Define the Agent Task Prompt
+    # Calculate total price and create items summary
+    total_price = sum(item.price * item.quantity for item in order_intent.order_items)
+    items_list = [
+        f"{item.quantity}x {item.name} (${item.price} each)"
+        for item in order_intent.order_items
+    ]
+    items_summary = ", ".join(items_list)
+
     task_prompt = f"""
 You are a payment testing assistant. Your goal is to test the Nekuda SDK payment flow on the Nekuda store website. 
 Follow the steps carefully to verify that all parts of the payment API integration work correctly.
-YOU NEED TO BE FAST AND ACCURATE, 
+DO NOT get stuck repeating the same actions. If something doesn't work after 2 attempts, try an alternative approach.
+CRUCIAL: Always use extract_content or scroll_to_text to identify products before clicking buttons.
+WARNING: Button indices are NOT reliable - clicking by index often adds wrong products to cart!
+VIEWPORT ISSUE: Button indices change when page scrolls - always ensure full page visibility first!
 User ID for all nekuda SDK operations: '{order_intent.user_id}'.
 
 Follow these steps EXACTLY in order:
 
-Phase 1: Navigate the nekuda Store and Add the Hat to Cart
+Phase 1: Navigate the nekuda Store and Add Items to Cart
 1. You are now on the nekuda store homepage: {order_intent.checkout_url}
-2. Locate the {order_intent.order_items[0].name} product tile
-3. double check the price is {order_intent.order_items[0].price}
-3. Click the "Add to Cart" button for the {order_intent.order_items[0].name}
-4. Click on the "Checkout" button to proceed to the payment page
+2. VIEWPORT SETUP: First, ensure all products are visible by scrolling to see the full page
+3. IMPORTANT: Before clicking any "Add to Cart" button, first identify the product by reading the text near it
+4. TARGET PRODUCTS: You need to find and add these exact items: {items_summary}
+5. For each item needed, follow this EXACT process:
+{chr(10).join([f"   - Scroll to or find text containing '{item.name}' on the page" + f"{chr(10)}   - Verify this is the correct product (name and price match)" + f"{chr(10)}   - Find the 'Add to Cart' button that belongs to THIS specific product" + f"{chr(10)}   - DO NOT use click_element_by_index - use text-based or position-based clicking" + (f"{chr(10)}   - Click 'Add to Cart' {item.quantity} times for this specific product" if item.quantity > 1 else f"{chr(10)}   - Click 'Add to Cart' once for this specific product") + f"{chr(10)}   - Use extract_content to verify the correct item was added to cart" for item in order_intent.order_items])}
+6. VERIFY: After adding items, check that you have the correct products in cart: {items_summary}
+7. Look for and click the "Checkout" button to proceed to payment
 
 Phase 2: Use nekuda SDK Payment Flow (EXACTLY AS DESCRIBED)
 On the checkout page, follow these steps precisely to test each nekuda SDK action:
 
 STEP 1: Call the 'Create nekuda Purchase Intent' action with these EXACT parameters:
 - user_id: "{order_intent.user_id}"
-- product_name: "{order_intent.order_items[0].name}"
-- price: {order_intent.order_items[0].price}
+- product_name: "Multiple Items: {items_summary}"
+- price: {total_price}
 - currency: "USD"
 - merchant_name: "nekuda Store"
-- conversation_context: {{"notes": "SDK integration test", "test_run": true}}
-- human_messages: ["Testing the nekuda SDK purchase flow"]
+- conversation_context: {{"notes": "SDK integration test - multi-item cart", "test_run": true, "items": {len(order_intent.order_items)}}}
+- human_messages: ["Testing the nekuda SDK purchase flow with multiple items"]
 
 STEP 2: After completing Step 1, carefully examine the response.
 - The response should contain "Mandate ID: "
@@ -123,22 +140,43 @@ STEP 6: After completing Step 5, carefully examine the response.
 - If the response contains an error, throw error and send the error to the chat
 - Otherwise, extract the following details: Card Number, Expiry Date, CVV, and Name on Card, Zip Code, Email, Phone Number, Billing Address.
 
-Phase 3: Enter Payment Details
+Phase 3: Enter Payment Details (CRITICAL: VALIDATE BEFORE PROCEEDING)
 1. Use the payment details from the SDK response to fill out the payment form:
    - Email: test.user@example.com <>IMPORTANT: If you see that the system recognized this email and use "link" payment, you will recognized the UI have already filled the details of the shipment and other data and you can just click on pay and skip the rest of the steps<>
+   - Full name on card: [The name on card from step 6]
+
+2. Fill the address details:
+    ⚠️ CRITICAL FIRST STEP: BEFORE entering ANY address information:
+    - Look for the button "Enter address manually" 
+    - If this button exists, you MUST click on it FIRST before filling any address fields
+    - If this button does not exist, then proceed to fill address fields
+    
+    After clicking "Enter address manually" (if it exists), fill the address details:
+        - Billing Address: [The billing address from step 6]
+        - City: [The city from step 6]
+        - State: [The state from step 6]
+        - Zip Code: [The zip code from step 6]
+
+3. Fill the payment details:   
    - Card Number: [The card number from step 6]
    - Expiry Date: [The expiry date from step 6]
    - CVC: [The CVV from step 6] if not exists use 123
-   - Full name on card: [The name on card from step 6]
-2. Fill the address instructions:
-   - Take the the Billing Address and the zip code from step 6 and fill both of them in one line in the address field. example: 123 Main St, 12345
-   - CLICK ON THE FIRST RESULT OF THE DROPDOWN
-3. Make sure country is set to "United States"
 
 Phase 4: Complete the Purchase
 1. Enter Phone Number in the end of the form: [The phone number from step 6]
+2. If the "Pay" button is hidden or cannot be clicked, please review which fields are missing and fill them by step 6.
 2. Click the "Pay" button to complete the purchase.
-3. if the process success - the html of the page will change to "not found". if not exist and fail the process and show it in the chat
+3. The process success - "payment success" will appear on the page.
+
+BUTTON CLICKING RULES:
+- NEVER click "Add to Cart" buttons by index number
+- Always verify you're clicking the button for the correct product
+- Use text proximity to determine which "Add to Cart" button belongs to which product
+
+CRITICAL PROGRESS RULES:
+- Maximum retries for clicking pay button is 3 times
+- Do not check or unckeck any checkboxes
+- Close any popups that appear or try baypass it in any way
 """
 
     # 5. Initialize and Run the Agent
@@ -155,7 +193,7 @@ Phase 4: Complete the Purchase
 
     print("\nStarting agent run...")
     try:
-        result = await agent.run(max_steps=30)
+        result = await agent.run(max_steps=20)
         print("\nAgent run completed.")
         print("Final Result:", result.final_result())
 

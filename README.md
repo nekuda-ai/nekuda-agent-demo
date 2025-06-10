@@ -4,10 +4,9 @@ A commerce agent using the **nekuda SDK** to store credit cards and complete che
 
 If you’re building agents, you can use this code as a template to embed agentic payments in your agent.
 
-Please send any feedback to founders@nekuda.ai.
+**Feedback welcome: founders@nekuda.ai**
 
 ## 🌟 Features
-x
 ### 🤖 AI Shopping Assistant
 - **Chat Shopping**: Browse and add items via chat  
 - **CopilotKit**: AI actions for smoother UX  

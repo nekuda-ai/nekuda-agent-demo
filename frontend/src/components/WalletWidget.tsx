@@ -5,7 +5,7 @@ import {
     NekudaWalletProvider,
     useNekudaWallet,
     NekudaPaymentForm
-} from '@nekuda/dev-react-nekuda-js';
+} from '@nekuda/react-nekuda-js';
 
 interface WalletFormProps {
     onSuccess: (cardTokenId: string) => void;

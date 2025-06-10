@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 from dotenv import load_dotenv
 from browser_use import Agent, Controller, BrowserSession
-from langchain_anthropic import ChatAnthropic  # Using Google's Gemini model
+from langchain_openai import ChatOpenAI  # Switched from ChatAnthropic to ChatOpenAI
 from pament_details_hander import (
     add_payment_details_handler_to_controller,
 )
@@ -15,6 +15,28 @@ load_dotenv(
 )  # Look for .env in project root
 
 
+def get_llm_model(model_type="openai"):
+    """Get the configured LLM model. Supports 'openai' and 'anthropic'."""
+    if model_type.lower() == "openai":
+        if not os.getenv("OPENAI_API_KEY"):
+            raise ValueError("OPENAI_API_KEY environment variable not set")
+        print("Initializing LLM (OpenAI GPT-4 Mini)...")
+        return ChatOpenAI(
+            model="gpt-4o-mini",
+            temperature=0.1,
+            max_tokens=4000,
+            timeout=30
+        )
+    elif model_type.lower() == "anthropic":
+        if not os.getenv("ANTHROPIC_API_KEY"):
+            raise ValueError("ANTHROPIC_API_KEY environment variable not set")
+        print("Initializing LLM (Claude 3.5 Sonnet)...")
+        from langchain_anthropic import ChatAnthropic
+        return ChatAnthropic(model="claude-3-5-sonnet-20240620")
+    else:
+        raise ValueError(f"Unsupported model type: {model_type}")
+
+
 async def run_order_automation(order_intent: OrderIntent):
     """Tests the full nekuda SDK payment flow with the actual SDK (no mocks)."""
     print("Starting nekuda payment flow integration test...")
@@ -24,9 +46,6 @@ async def run_order_automation(order_intent: OrderIntent):
         print(
             "ERROR: NEKUDA_API_KEY environment variable not set. Cannot run test without it."
         )
-        return
-    if not os.getenv("ANTHROPIC_API_KEY"):
-        print("ERROR: ANTHROPIC_API_KEY environment variable not set. Aborting test.")
         return
 
     # Print NEKUDA_BASE_URL for debugging
@@ -44,9 +63,12 @@ async def run_order_automation(order_intent: OrderIntent):
         highlight_elements=True,
     )
 
-    # 2. Setup LLM
-    print("Initializing LLM (Google Gemini)...")
-    llm = ChatAnthropic(model="claude-3-5-sonnet-20240620")
+    # 2. Setup LLM - Use OpenAI by default, can be changed to "anthropic"
+    try:
+        llm = get_llm_model("openai")  # Change to "anthropic" to switch back
+    except ValueError as e:
+        print(f"ERROR: {e}")
+        return
 
     # 3. Define Initial Actions
     initial_actions = [{"go_to_url": {"url": order_intent.checkout_url}}]

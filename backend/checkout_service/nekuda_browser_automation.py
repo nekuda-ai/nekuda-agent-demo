@@ -65,7 +65,7 @@ async def run_order_automation(order_intent: OrderIntent):
 
     # 2. Setup LLM - Use OpenAI by default, can be changed to "anthropic"
     try:
-        llm = get_llm_model("openai")  # Change to "anthropic" to switch back
+        llm = get_llm_model("anthropic")  # Change to "anthropic" to switch back
     except ValueError as e:
         print(f"ERROR: {e}")
         return

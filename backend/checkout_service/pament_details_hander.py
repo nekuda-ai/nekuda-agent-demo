@@ -225,6 +225,8 @@ def add_payment_details_handler_to_controller(controller: Controller):
                 f"Email: {nekuda_card_details.email}"
                 f"Phone Number: {nekuda_card_details.phone_number}"
                 f"Billing Address: {nekuda_card_details.billing_address}"
+                f"City: {nekuda_card_details.city}"
+                f"State: {nekuda_card_details.state}"
             )
 
             success_msg = f"nekuda card details revealed. {card_details_str}"

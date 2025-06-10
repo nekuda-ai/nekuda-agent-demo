@@ -22,16 +22,14 @@ def get_llm_model(model_type="openai"):
             raise ValueError("OPENAI_API_KEY environment variable not set")
         print("Initializing LLM (OpenAI GPT-4 Mini)...")
         return ChatOpenAI(
-            model="gpt-4o-mini",
-            temperature=0.1,
-            max_tokens=4000,
-            timeout=30
+            model="gpt-4o-mini", temperature=0, max_tokens=4000, timeout=30
         )
     elif model_type.lower() == "anthropic":
         if not os.getenv("ANTHROPIC_API_KEY"):
             raise ValueError("ANTHROPIC_API_KEY environment variable not set")
         print("Initializing LLM (Claude 3.5 Sonnet)...")
         from langchain_anthropic import ChatAnthropic
+
         return ChatAnthropic(model="claude-3-5-sonnet-20240620")
     else:
         raise ValueError(f"Unsupported model type: {model_type}")
@@ -76,17 +74,17 @@ async def run_order_automation(order_intent: OrderIntent):
     task_prompt = f"""
 You are a payment testing assistant. Your goal is to test the Nekuda SDK payment flow on the Nekuda store website. 
 Follow the steps carefully to verify that all parts of the payment API integration work correctly.
-YOU NEED TO BE FAST AND ACCURATE, 
+YOU NEED TO BE FAST AND ACCURATE, BUT ALSO THOROUGH - DO NOT SKIP VALIDATION STEPS.
 User ID for all nekuda SDK operations: '{order_intent.user_id}'.
 
 Follow these steps EXACTLY in order:
 
-Phase 1: Navigate the nekuda Store and Add the Hat to Cart
+Phase 1: Navigate the nekuda Store and Add the {order_intent.order_items[0].name} to Cart
 1. You are now on the nekuda store homepage: {order_intent.checkout_url}
 2. Locate the {order_intent.order_items[0].name} product tile
 3. double check the price is {order_intent.order_items[0].price}
-3. Click the "Add to Cart" button for the {order_intent.order_items[0].name}
-4. Click on the "Checkout" button to proceed to the payment page
+4. Click the "Add to Cart" button for the {order_intent.order_items[0].name}
+5. Click on the "Checkout" button to proceed to the payment page
 
 Phase 2: Use nekuda SDK Payment Flow (EXACTLY AS DESCRIBED)
 On the checkout page, follow these steps precisely to test each nekuda SDK action:
@@ -123,22 +121,50 @@ STEP 6: After completing Step 5, carefully examine the response.
 - If the response contains an error, throw error and send the error to the chat
 - Otherwise, extract the following details: Card Number, Expiry Date, CVV, and Name on Card, Zip Code, Email, Phone Number, Billing Address.
 
-Phase 3: Enter Payment Details
+Phase 3: Enter Payment Details (CRITICAL: VALIDATE BEFORE PROCEEDING)
 1. Use the payment details from the SDK response to fill out the payment form:
    - Email: test.user@example.com <>IMPORTANT: If you see that the system recognized this email and use "link" payment, you will recognized the UI have already filled the details of the shipment and other data and you can just click on pay and skip the rest of the steps<>
+   - Full name on card: [The name on card from step 6]
+
+2. Fill the address details (TWO OPTIONS):
+
+        OPTION 2 - If separate fields are NOT visible (DEFAULT - CONCATENATION REQUIRED):
+
+        ⚠️ CRITICAL: Use the EXACT data extracted in step 6 to create a concatenated address string:
+
+        A. From step 6, you extracted these address components:
+        - Billing Address: [value]
+        - City: [value] 
+        - State: [value]
+        - Zip Code: [value]
+
+        B. Create the COMPLETE concatenated string by combining them with commas:
+        "[Billing Address], [City], [State], [Zip Code]"
+
+        C. Enter this COMPLETE concatenated address into the address field
+        DO NOT enter just the Billing Address - you MUST include City, State, and Zip Code
+
+        D. This will open a dropdown with address suggestions
+        ⚠️ CRITICAL: YOU MUST CLICK IMMEDIATELY ON THE FIRST RESULT IN THE DROPDOWN - THIS IS MANDATORY! ⚠️
+
+        E. Do NOT select any other option - ONLY the FIRST result
+
+        F. After clicking the first result, IMMEDIATELY stop and continue to Phase 5
+
+3. Fill the payment details:   
    - Card Number: [The card number from step 6]
    - Expiry Date: [The expiry date from step 6]
    - CVC: [The CVV from step 6] if not exists use 123
-   - Full name on card: [The name on card from step 6]
-2. Fill the address instructions:
-   - Take the the Billing Address and the zip code from step 6 and fill both of them in one line in the address field. example: 123 Main St, 12345
-   - CLICK ON THE FIRST RESULT OF THE DROPDOWN
-3. Make sure country is set to "United States"
 
 Phase 4: Complete the Purchase
 1. Enter Phone Number in the end of the form: [The phone number from step 6]
+2. If the "Pay" button is hidden or cannot be clicked, please review which fields are missing and fill them by step 6.
 2. Click the "Pay" button to complete the purchase.
-3. if the process success - the html of the page will change to "not found". if not exist and fail the process and show it in the chat
+3. if the process success - "payment success" will appear on the page. if not exist and fail the process and show it in the chat
+
+CRITICAL:
+- Maximum retries for clicking pay button is 3 times.
+- DO not Fill in the cardholder name and check the billing info checkbox.
 """
 
     # 5. Initialize and Run the Agent

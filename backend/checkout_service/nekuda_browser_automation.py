@@ -70,7 +70,16 @@ async def run_order_automation(order_intent: OrderIntent):
 
     # 3. Define Initial Actions
     initial_actions = [{"go_to_url": {"url": order_intent.checkout_url}}]
+
     # 4. Define the Agent Task Prompt
+    # Calculate total price and create items summary
+    total_price = sum(item.price * item.quantity for item in order_intent.order_items)
+    items_list = [
+        f"{item.quantity}x {item.name} (${item.price} each)"
+        for item in order_intent.order_items
+    ]
+    items_summary = ", ".join(items_list)
+
     task_prompt = f"""
 You are a payment testing assistant. Your goal is to test the Nekuda SDK payment flow on the Nekuda store website. 
 Follow the steps carefully to verify that all parts of the payment API integration work correctly.
@@ -79,24 +88,24 @@ User ID for all nekuda SDK operations: '{order_intent.user_id}'.
 
 Follow these steps EXACTLY in order:
 
-Phase 1: Navigate the nekuda Store and Add the {order_intent.order_items[0].name} to Cart
+Phase 1: Navigate the nekuda Store and Add ALL Items to Cart
 1. You are now on the nekuda store homepage: {order_intent.checkout_url}
-2. Locate the {order_intent.order_items[0].name} product tile
-3. double check the price is {order_intent.order_items[0].price}
-4. Click the "Add to Cart" button for the {order_intent.order_items[0].name}
-5. Click on the "Checkout" button to proceed to the payment page
+2. Add each item to the cart in the specified quantities:
+{chr(10).join([f"   - Locate the {item.name} product tile, verify price is ${item.price}, click 'Add to Cart' {item.quantity} time(s)" for item in order_intent.order_items])}
+3. After adding all items, verify the cart shows: {items_summary}
+4. Click on the "Checkout" button to proceed to the payment page
 
 Phase 2: Use nekuda SDK Payment Flow (EXACTLY AS DESCRIBED)
 On the checkout page, follow these steps precisely to test each nekuda SDK action:
 
 STEP 1: Call the 'Create nekuda Purchase Intent' action with these EXACT parameters:
 - user_id: "{order_intent.user_id}"
-- product_name: "{order_intent.order_items[0].name}"
-- price: {order_intent.order_items[0].price}
+- product_name: "Multiple Items: {items_summary}"
+- price: {total_price}
 - currency: "USD"
 - merchant_name: "nekuda Store"
-- conversation_context: {{"notes": "SDK integration test", "test_run": true}}
-- human_messages: ["Testing the nekuda SDK purchase flow"]
+- conversation_context: {{"notes": "SDK integration test - multi-item cart", "test_run": true, "items": {len(order_intent.order_items)}}}
+- human_messages: ["Testing the nekuda SDK purchase flow with multiple items"]
 
 STEP 2: After completing Step 1, carefully examine the response.
 - The response should contain "Mandate ID: "

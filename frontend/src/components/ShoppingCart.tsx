@@ -27,6 +27,12 @@ export function ShoppingCart() {
     // Calculate total
     const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
+    // Clear cart on app open/refresh
+    useEffect(() => {
+        setCartItems([]);
+        console.log('Cart cleared on app open/refresh');
+    }, []);
+
     // Load products from backend API
     useEffect(() => {
         const loadProducts = async () => {
@@ -54,9 +60,15 @@ export function ShoppingCart() {
 
     // Make cart state readable to Copilot
     useCopilotReadable({
-        description: "Current shopping cart contents and product catalog. The catalog includes product ID, name, description, and category, which can be used to find a specific product.",
+        description: "Current shopping cart contents and product catalog. The cart shows EXACT quantities and prices. Do not duplicate or misinterpret the cart data.",
         value: {
-            cartItems,
+            cartItems: cartItems.map(item => ({
+                id: item.id,
+                name: item.name,
+                price: item.price,
+                quantity: item.quantity,
+                subtotal: (item.price * item.quantity).toFixed(2)
+            })),
             total: total.toFixed(2),
             itemCount: cartItems.reduce((sum, item) => sum + item.quantity, 0),
             availableProducts: products.map(product => ({
@@ -68,7 +80,11 @@ export function ShoppingCart() {
             })),
             purchaseHistory,
             loading,
-            error
+            error,
+            debugInfo: {
+                rawCartItems: cartItems,
+                timestamp: new Date().toISOString()
+            }
         },
     });
 
@@ -162,7 +178,7 @@ export function ShoppingCart() {
             if (error) {
                 return `Error loading products: ${error}`;
             }
-            
+
             const searchTerm = query.toLowerCase();
             const results = products.filter(product =>
                 product.name.toLowerCase().includes(searchTerm) ||
@@ -277,12 +293,14 @@ export function ShoppingCart() {
                 const existingItem = prev.find(item => item.id === productId);
 
                 if (existingItem) {
+                    console.log(`Adding ${quantity} to existing item. Current quantity: ${existingItem.quantity}`);
                     return prev.map(item =>
                         item.id === productId
                             ? { ...item, quantity: item.quantity + quantity }
                             : item
                     );
                 } else {
+                    console.log(`Adding new item: ${product.name}, quantity: ${quantity}, price: ${product.price}`);
                     return [...prev, {
                         id: product.id,
                         name: product.name,
@@ -307,7 +325,12 @@ export function ShoppingCart() {
             }
 
             const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-            return `Cart contents are displayed below. You have ${itemCount} items totaling $${total.toFixed(2)}. Do not generate additional cart listings.`;
+
+            // Log actual cart state for debugging
+            console.log('ViewCart - Current cart state:', cartItems);
+            console.log('ViewCart - Item count:', itemCount, 'Total:', total.toFixed(2));
+
+            return `CART DISPLAY: The visual cart component below shows the complete and accurate cart contents. Total items: ${itemCount}, Total price: $${total.toFixed(2)}. DO NOT provide additional text summaries as they may be inaccurate.`;
         },
         render: () => {
             if (cartItems.length === 0) {

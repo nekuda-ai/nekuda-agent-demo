@@ -126,30 +126,17 @@ Phase 3: Enter Payment Details (CRITICAL: VALIDATE BEFORE PROCEEDING)
    - Email: test.user@example.com <>IMPORTANT: If you see that the system recognized this email and use "link" payment, you will recognized the UI have already filled the details of the shipment and other data and you can just click on pay and skip the rest of the steps<>
    - Full name on card: [The name on card from step 6]
 
-2. Fill the address details (TWO OPTIONS):
-
-        OPTION 2 - If separate fields are NOT visible (DEFAULT - CONCATENATION REQUIRED):
-
-        ⚠️ CRITICAL: Use the EXACT data extracted in step 6 to create a concatenated address string:
-
-        A. From step 6, you extracted these address components:
-        - Billing Address: [value]
-        - City: [value] 
-        - State: [value]
-        - Zip Code: [value]
-
-        B. Create the COMPLETE concatenated string by combining them with commas:
-        "[Billing Address], [City], [State], [Zip Code]"
-
-        C. Enter this COMPLETE concatenated address into the address field
-        DO NOT enter just the Billing Address - you MUST include City, State, and Zip Code
-
-        D. This will open a dropdown with address suggestions
-        ⚠️ CRITICAL: YOU MUST CLICK IMMEDIATELY ON THE FIRST RESULT IN THE DROPDOWN - THIS IS MANDATORY! ⚠️
-
-        E. Do NOT select any other option - ONLY the FIRST result
-
-        F. After clicking the first result, IMMEDIATELY stop and continue to Phase 5
+2. Fill the address details:
+    ⚠️ CRITICAL FIRST STEP: BEFORE entering ANY address information:
+    - Look for the button "Enter address manually" 
+    - If this button exists, you MUST click on it FIRST before filling any address fields
+    - If this button does not exist, then proceed to fill address fields
+    
+    After clicking "Enter address manually" (if it exists), fill the address details:
+        - Billing Address: [The billing address from step 6]
+        - City: [The city from step 6]
+        - State: [The state from step 6]
+        - Zip Code: [The zip code from step 6]
 
 3. Fill the payment details:   
    - Card Number: [The card number from step 6]

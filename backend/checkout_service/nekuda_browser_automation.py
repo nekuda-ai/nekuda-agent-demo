@@ -3,8 +3,9 @@ import os
 from datetime import datetime
 from dotenv import load_dotenv
 from browser_use import Agent, Controller, BrowserSession
-from langchain_openai import ChatOpenAI  # Switched from ChatAnthropic to ChatOpenAI
-from pament_details_hander import (
+from langchain_openai import ChatOpenAI
+from langchain_anthropic import ChatAnthropic
+from payment_details_hander import (
     add_payment_details_handler_to_controller,
 )
 from models import OrderIntent
@@ -28,8 +29,6 @@ def get_llm_model(model_type="openai"):
         if not os.getenv("ANTHROPIC_API_KEY"):
             raise ValueError("ANTHROPIC_API_KEY environment variable not set")
         print("Initializing LLM (Claude 3.5 Sonnet)...")
-        from langchain_anthropic import ChatAnthropic
-
         return ChatAnthropic(model="claude-3-5-sonnet-20240620")
     else:
         raise ValueError(f"Unsupported model type: {model_type}")

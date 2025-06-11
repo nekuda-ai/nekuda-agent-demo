@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useCopilotAction, useCopilotReadable } from '@copilotkit/react-core';
 
 interface Product {
@@ -23,9 +23,6 @@ export function ShoppingCart() {
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-
-    // Calculate total
-    const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
     // Clear cart on app open/refresh
     useEffect(() => {
@@ -58,34 +55,38 @@ export function ShoppingCart() {
         loadProducts();
     }, []);
 
+    // Calculate total (memoized to prevent unnecessary recalculations)
+    const total = useMemo(() => {
+        return cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    }, [cartItems]);
+
+    // Memoize cart data for Copilot to prevent infinite re-renders
+    const copilotValue = useMemo(() => ({
+        cartItems: cartItems.map(item => ({
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            subtotal: (item.price * item.quantity).toFixed(2)
+        })),
+        total: total.toFixed(2),
+        itemCount: cartItems.reduce((sum, item) => sum + item.quantity, 0),
+        availableProducts: products.map(product => ({
+            id: product.id,
+            name: product.name,
+            description: product.description,
+            category: product.category,
+            price: product.price
+        })),
+        purchaseHistory,
+        loading,
+        error
+    }), [cartItems, total, products, purchaseHistory, loading, error]);
+
     // Make cart state readable to Copilot
     useCopilotReadable({
         description: "Current shopping cart contents and product catalog. The cart shows EXACT quantities and prices. Do not duplicate or misinterpret the cart data.",
-        value: {
-            cartItems: cartItems.map(item => ({
-                id: item.id,
-                name: item.name,
-                price: item.price,
-                quantity: item.quantity,
-                subtotal: (item.price * item.quantity).toFixed(2)
-            })),
-            total: total.toFixed(2),
-            itemCount: cartItems.reduce((sum, item) => sum + item.quantity, 0),
-            availableProducts: products.map(product => ({
-                id: product.id,
-                name: product.name,
-                description: product.description,
-                category: product.category,
-                price: product.price
-            })),
-            purchaseHistory,
-            loading,
-            error,
-            debugInfo: {
-                rawCartItems: cartItems,
-                timestamp: new Date().toISOString()
-            }
-        },
+        value: copilotValue,
     });
 
     // Action to view all products

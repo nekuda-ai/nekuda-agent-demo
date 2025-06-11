@@ -2,8 +2,48 @@
 
 # Auto-setup and start all services for the agent-demo project
 
+# Parse command line arguments
+CLEAN_INSTALL=false
+for arg in "$@"; do
+    case $arg in
+        --clean)
+            CLEAN_INSTALL=true
+            shift
+            ;;
+        -h|--help)
+            echo "Usage: $0 [--clean] [--help]"
+            echo ""
+            echo "Options:"
+            echo "  --clean    Remove existing .venv and node_modules for fresh install"
+            echo "  --help     Show this help message"
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $arg"
+            echo "Use --help for usage information"
+            exit 1
+            ;;
+    esac
+done
+
 echo "🚀 Nekuda AI Shopping Assistant - Auto Setup & Start"
 echo "=================================================="
+
+# Clean installation if requested
+if [ "$CLEAN_INSTALL" = true ]; then
+    echo "🧹 Clean install requested - removing existing dependencies..."
+    if [ -d ".venv" ]; then
+        echo "🗑️  Removing .venv directory..."
+        rm -rf .venv
+        echo "✅ .venv directory removed"
+    fi
+    if [ -d "frontend/node_modules" ]; then
+        echo "🗑️  Removing frontend/node_modules directory..."
+        rm -rf frontend/node_modules
+        echo "✅ node_modules directory removed"
+    fi
+    echo ""
+fi
 
 # Check for .env file
 if [ ! -f ".env" ]; then

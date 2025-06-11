@@ -23,6 +23,7 @@ from nekuda import (
     MandateData,
     NekudaClient,
 )
+from models import PurchaseIntent
 
 logger = logging.getLogger(__name__)
 
@@ -71,17 +72,10 @@ def add_payment_details_handler_to_controller(controller: Controller):
     nekuda_client = get_nekuda_client()
     print(f"Registering payment actions with client: {nekuda_client}")
 
-    @controller.action("Create nekuda Purchase Intent")
+
+    @controller.action("Create nekuda Purchase Intent", param_model=PurchaseIntent)
     async def create_purchase_intent(
-        user_id: str,
-        product_name: str,
-        product_description: str,
-        price: float,
-        currency: str,
-        merchant_name: str,
-        conversation_context: Optional[Dict[str, Any]] = None,
-        human_messages: Optional[List[str]] = None,
-        additional_details: Optional[Dict[str, Any]] = None,
+        purchase_intent: PurchaseIntent
     ) -> ActionResult:
         """Creates a purchase mandate with nekuda to get a mandate_id."""
         if not nekuda_client:
@@ -91,23 +85,13 @@ def add_payment_details_handler_to_controller(controller: Controller):
                 error="nekudaClient not initialized.",
             )
 
-        mandate_data = MandateData(
-            product=product_name,
-            product_description=product_description,
-            price=price,
-            currency=currency.upper(),
-            merchant=merchant_name,
-            confidence_score=0.95,
-            conversation_context=conversation_context or {},
-            human_messages=human_messages or [],
-            additional_details=additional_details or {},
-        )
+        mandate_data = purchase_intent.mandate_data
 
         try:
             print(
-                f"Attempting to create mandate for user_id: {user_id} with request_id: {mandate_data.request_id}"
+                f"Attempting to create mandate for user_id: {purchase_intent.user_id} with request_id: {mandate_data.request_id}"
             )
-            user_api = nekuda_client.user(user_id)
+            user_api = nekuda_client.user(purchase_intent.user_id)
             mandate_response = user_api.create_mandate(mandate_data)
 
             created_mandate_id = mandate_response.mandate_id
@@ -220,12 +204,12 @@ def add_payment_details_handler_to_controller(controller: Controller):
                 f"Card Number: {nekuda_card_details.card_number}, "
                 f"Expiry Date: {expiry_date}, "
                 f"CVV: {nekuda_card_details.card_cvv}, "
-                f"Name on Card: {nekuda_card_details.cardholder_name}"
-                f"Zip Code: {nekuda_card_details.zip_code}"
-                f"Email: {nekuda_card_details.email}"
-                f"Phone Number: {nekuda_card_details.phone_number}"
-                f"Billing Address: {nekuda_card_details.billing_address}"
-                f"City: {nekuda_card_details.city}"
+                f"Name on Card: {nekuda_card_details.cardholder_name}, "
+                f"Zip Code: {nekuda_card_details.zip_code}, "
+                f"Email: {nekuda_card_details.email}, "
+                f"Phone Number: {nekuda_card_details.phone_number}, "
+                f"Billing Address: {nekuda_card_details.billing_address}, "
+                f"City: {nekuda_card_details.city}, "
                 f"State: {nekuda_card_details.state}"
             )
 

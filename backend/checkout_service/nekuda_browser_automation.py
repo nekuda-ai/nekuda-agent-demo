@@ -16,20 +16,37 @@ load_dotenv(
 )  # Look for .env in project root
 
 
-def get_llm_model(model_type="openai"):
-    """Get the configured LLM model. Supports 'openai' and 'anthropic'."""
+def get_llm_model(model_type="openai", is_planner=False):
+    """Get the configured LLM model. Supports 'openai' and 'anthropic'.
+
+    Args:
+        model_type: Type of model ('openai' or 'anthropic')
+        is_planner: If True, returns a faster model for planning tasks
+    """
     if model_type.lower() == "openai":
         if not os.getenv("OPENAI_API_KEY"):
             raise ValueError("OPENAI_API_KEY environment variable not set")
-        print("Initializing LLM (OpenAI GPT-4 Mini)...")
-        return ChatOpenAI(
-            model="gpt-4o-mini", temperature=0, max_tokens=4000, timeout=30
-        )
+
+        if is_planner:
+            print("Initializing Planner LLM (OpenAI GPT-3.5 Turbo)...")
+            return ChatOpenAI(
+                model="gpt-3.5-turbo", temperature=0, max_tokens=1000, timeout=15
+            )
+        else:
+            print("Initializing Main LLM (OpenAI GPT-4 Mini)...")
+            return ChatOpenAI(
+                model="gpt-4o-mini", temperature=0, max_tokens=4000, timeout=30
+            )
     elif model_type.lower() == "anthropic":
         if not os.getenv("ANTHROPIC_API_KEY"):
             raise ValueError("ANTHROPIC_API_KEY environment variable not set")
-        print("Initializing LLM (Claude 3.5 Sonnet)...")
-        return ChatAnthropic(model="claude-3-5-sonnet-20240620")
+
+        if is_planner:
+            print("Initializing Planner LLM (Claude 3 Haiku)...")
+            return ChatAnthropic(model="claude-3-haiku-20241022", temperature=0)
+        else:
+            print("Initializing Main LLM (Claude 3.5 Haiku)...")
+            return ChatAnthropic(model="claude-3-5-haiku-20241022")
     else:
         raise ValueError(f"Unsupported model type: {model_type}")
 
@@ -59,20 +76,22 @@ async def run_order_automation(order_intent: OrderIntent):
         headless=False,
         highlight_elements=True,
         window_size={
-            "width": 1920,
-            "height": 1080,
-        },  # Set larger viewport to show all products
+            "width": 1020,
+            "height": 1020,
+        },
     )
 
     # 2. Setup LLM - Use OpenAI by default, can be changed to "anthropic"
     try:
-        llm = get_llm_model("anthropic")  # Change to "anthropic" to switch back
+        model_type = "anthropic"  # Change to "openai" if needed
+        llm = get_llm_model(model_type)
+        # planner_llm = get_llm_model(model_type, is_planner=True)
     except ValueError as e:
         print(f"ERROR: {e}")
         return
 
     # 3. Define Initial Actions
-    initial_actions = [{"go_to_url": {"url": order_intent.checkout_url}}]
+    initial_actions = [{"go_to_url": {"url": order_intent.checkout_url}, "wait": {"seconds": 5}}]
 
     # 4. Define the Agent Task Prompt
     # Calculate total price and create items summary
@@ -83,99 +102,54 @@ async def run_order_automation(order_intent: OrderIntent):
     ]
     items_summary = ", ".join(items_list)
 
-    task_prompt = f"""
-You are a payment testing assistant. Your goal is to test the Nekuda SDK payment flow on the Nekuda store website. 
-Follow the steps carefully to verify that all parts of the payment API integration work correctly.
-DO NOT get stuck repeating the same actions. If something doesn't work after 2 attempts, try an alternative approach.
-CRUCIAL: Always use extract_content or scroll_to_text to identify products before clicking buttons.
-WARNING: Button indices are NOT reliable - clicking by index often adds wrong products to cart!
-VIEWPORT ISSUE: Button indices change when page scrolls - always ensure full page visibility first!
-User ID for all nekuda SDK operations: '{order_intent.user_id}'.
+    # Concise task message
+    task_prompt = f"""Complete a purchase on the Nekuda store using the Nekuda SDK for payment.
 
-Follow these steps EXACTLY in order:
+Order details:
+- Items: {items_summary}
+- Total: ${total_price}
+- User ID: {order_intent.user_id}
 
-Phase 1: Navigate the nekuda Store and Add Items to Cart
-1. You are now on the nekuda store homepage: {order_intent.checkout_url}
-2. VIEWPORT SETUP: First, ensure all products are visible by scrolling to see the full page
-3. IMPORTANT: Before clicking any "Add to Cart" button, first identify the product by reading the text near it
-4. TARGET PRODUCTS: You need to find and add these exact items: {items_summary}
-5. For each item needed, follow this EXACT process:
-{chr(10).join([f"   - Scroll to or find text containing '{item.name}' on the page" + f"{chr(10)}   - Verify this is the correct product (name and price match)" + f"{chr(10)}   - Find the 'Add to Cart' button that belongs to THIS specific product" + f"{chr(10)}   - DO NOT use click_element_by_index - use text-based or position-based clicking" + (f"{chr(10)}   - Click 'Add to Cart' {item.quantity} times for this specific product" if item.quantity > 1 else f"{chr(10)}   - Click 'Add to Cart' once for this specific product") + f"{chr(10)}   - Use extract_content to verify the correct item was added to cart" for item in order_intent.order_items])}
-6. VERIFY: After adding items, check that you have the correct products in cart: {items_summary}
-7. Look for and click the "Checkout" button to proceed to payment
+Steps:
+1. Add the exact items to cart (verify each product by name before clicking)
+2. Go to checkout
+3. Use Nekuda SDK actions in order: Create Purchase Intent → Get Card Reveal Token → Get Payment Details
+4. Fill checkout form with the revealed payment details
+5. Complete the purchase
+"""
 
-Phase 2: Use nekuda SDK Payment Flow (EXACTLY AS DESCRIBED)
-On the checkout page, follow these steps precisely to test each nekuda SDK action:
+    # Detailed context for the agent
+    message_context = f"""
+Important Guidelines:
 
-STEP 1: Call the 'Create nekuda Purchase Intent' action with these EXACT parameters:
-- user_id: "{order_intent.user_id}"
-- product_name: "Multiple Items: {items_summary}"
-- price: {total_price}
-- currency: "USD"
-- merchant_name: "nekuda Store"
-- conversation_context: {{"notes": "SDK integration test - multi-item cart", "test_run": true, "items": {len(order_intent.order_items)}}}
-- human_messages: ["Testing the nekuda SDK purchase flow with multiple items"]
+**Cart Management:**
+- Always scroll to see all products first
+- Identify products by their text/name, NOT by button index
+- Verify correct items, and quantities are in cart before checkout
+- For multiple quantities, click Add to Cart multiple times
 
-STEP 2: After completing Step 1, carefully examine the response.
-- The response should contain "Mandate ID: "
-- Extract the complete Mandate ID value (2).
-- If the response contains an error, call 'done' with the error details.
+**Nekuda SDK Flow:**
+1. Create Purchase Intent
+2. Extract Mandate ID from response
+3. Get Card Reveal Token using the Mandate ID (id should be digits only)
+4. Extract Reveal Token from response
+5. Get Payment Details using the Reveal Token
+6. Extract all payment fields from response
 
-STEP 3: Call the 'Get nekuda Card Reveal Token' action with these EXACT parameters:
-- user_id: "{order_intent.user_id}"
-- mandate_id: [The exact Mandate ID you extracted in step 2]
+**Checkout Form:**
+- Email: test.user@example.com (ALWAYS exit OTP windows without completing it)
+- IMPORTANT: If OTP window is detected, close it
+- IMPORTANT: Click "Enter address manually" button if present before filling address
+- Use all details from SDK response (card, expiry, CVV, name, address, etc.)
+- Phone number goes at the end of form
+- Default CVV to 123 if not provided
 
-STEP 4: After completing Step 3, carefully examine the response.
-- The response should contain "nekuda card reveal token obtained. User ID: {order_intent.user_id}. Reveal Token:"
-- Extract the complete Reveal Token value (starting with "tok_").
-- If the response contains an error, call 'done' with the error details.
-
-STEP 5: Call the 'Get Payment Details from nekuda SDK' action with these EXACT parameters:
-- user_id: "{order_intent.user_id}"
-- reveal_token: [The exact Reveal Token you extracted in step 4]
-
-STEP 6: After completing Step 5, carefully examine the response.
-- The response should contain "nekuda card details revealed." followed by card details.
-- If the response contains an error, throw error and send the error to the chat
-- Otherwise, extract the following details: Card Number, Expiry Date, CVV, and Name on Card, Zip Code, Email, Phone Number, Billing Address.
-
-Phase 3: Enter Payment Details (CRITICAL: VALIDATE BEFORE PROCEEDING)
-1. Use the payment details from the SDK response to fill out the payment form:
-   - Email: test.user@example.com <>IMPORTANT: If you see that the system recognized this email and use "link" payment, you will recognized the UI have already filled the details of the shipment and other data and you can just click on pay and skip the rest of the steps<>
-   - Full name on card: [The name on card from step 6]
-
-2. Fill the address details:
-    ⚠️ CRITICAL FIRST STEP: BEFORE entering ANY address information:
-    - Look for the button "Enter address manually" 
-    - If this button exists, you MUST click on it FIRST before filling any address fields
-    - If this button does not exist, then proceed to fill address fields
-    
-    After clicking "Enter address manually" (if it exists), fill the address details:
-        - Billing Address: [The billing address from step 6]
-        - City: [The city from step 6]
-        - State: [The state from step 6]
-        - Zip Code: [The zip code from step 6]
-
-3. Fill the payment details:   
-   - Card Number: [The card number from step 6]
-   - Expiry Date: [The expiry date from step 6]
-   - CVC: [The CVV from step 6] if not exists use 123
-
-Phase 4: Complete the Purchase
-1. Enter Phone Number in the end of the form: [The phone number from step 6]
-2. If the "Pay" button is hidden or cannot be clicked, please review which fields are missing and fill them by step 6.
-3. Scroll down to the bottom of the page and click the "Pay" button to complete the purchase.
-4. The process success - "payment success" will appear on the page.
-
-BUTTON CLICKING RULES:
-- NEVER click "Add to Cart" buttons by index number
-- Always verify you're clicking the button for the correct product
-- Use text proximity to determine which "Add to Cart" button belongs to which product
-
-CRITICAL PROGRESS RULES:
-- Maximum retries for clicking pay button is 3 times
-- Do not check or unckeck any checkboxes
-- Close any popups that appear or try baypass it in any way
+**Error Handling:**
+- Max 2 retries per action
+- Max 3 retries for final Pay button
+- Close/bypass any popups
+- Don't toggle checkboxes
+- ALWAYS close OTP window including email and phone verification
 """
 
     # 5. Initialize and Run the Agent
@@ -184,9 +158,11 @@ CRITICAL PROGRESS RULES:
         task=task_prompt,
         llm=llm,
         controller=controller,
-        browser_session=browser_session,  # Use the incognito browser session
+        browser_session=browser_session,
         initial_actions=initial_actions,
-        use_vision=False,
+        use_vision=True,
+        message_context=message_context,  # Add detailed context
+        max_failures=3,  # Limit consecutive failures
         generate_gif=f"test_nekuda_payment_flow_{datetime.now().strftime('%Y%m%d_%H%M%S')}.gif",
     )
 

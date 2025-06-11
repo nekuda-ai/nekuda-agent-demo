@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
+from nekuda import MandateData
 
 
 class BrowserCheckoutRequest(BaseModel):
@@ -54,6 +55,11 @@ class PaymentSummary(BaseModel):
     estimated_tax: float = 0.0
     estimated_delivery_fee: float = 0.0
     estimated_total: float  # To be calculated: subtotal + tax + delivery_fee
+
+class PurchaseIntent(BaseModel):
+    """Purchase intent model with User ID and MandateData."""
+    user_id: str
+    mandate_data: MandateData
 
 
 class OrderIntent(BaseModel):

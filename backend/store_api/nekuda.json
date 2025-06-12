@@ -7,33 +7,33 @@
     "items": [
         {
             "id": "NK-001",
-            "name": "nekuda t-shirt",
-            "price": 10.00,
-            "description": "Premium cotton t-shirt with Nekuda logo",
+            "name": "Nekuda T-shirt",
+            "price": 20.00,
+            "description": "Soft cotton t-shirt with Nekuda logo",
             "category": "apparel",
             "image_url": "https://files.stripe.com/links/MDB8YWNjdF8xUUl6UVVMRU9aRnhHbkJIfGZsX3Rlc3RfMHp6NVBkeHB0SkVxM0trYWkxSFNiYkRO00mzoMLTT9"
         },
         {
             "id": "NK-002",
-            "name": "nekuda hoodie",
-            "price": 18.00,
-            "description": "Comfortable fleece hoodie",
+            "name": "Nekuda hoodie",
+            "price": 55.00,
+            "description": "Premium hoodie with Nekuda design",
             "category": "apparel",
             "image_url": "https://files.stripe.com/links/MDB8YWNjdF8xUUl6UVVMRU9aRnhHbkJIfGZsX3Rlc3RfM1VRVTBGamtUc21TcERXVG5hTk5GbWE500SI7KKHJ0"
         },
         {
             "id": "NK-003",
-            "name": "nekuda hat",
-            "price": 12.00,
-            "description": "nekuda hat",
+            "name": "Nekuda hat",
+            "price": 30.00,
+            "description": "Classic cap with Nekuda branding",
             "category": "accessories",
             "image_url": "https://files.stripe.com/links/MDB8YWNjdF8xUUl6UVVMRU9aRnhHbkJIfGZsX3Rlc3RfaDdNb0hNRzJ6SUtGMm5qMVplWUhac0gw00oHaNbL7q"
         },
         {
             "id": "NK-004",
-            "name": "nekuda beanie",
-            "price": 12.00,
-            "description": "nekuda beanie",
+            "name": "Nekuda beanie",
+            "price": 25.00,
+            "description": "Comfortable and stylish beanie with Nekuda logo",
             "category": "accessories",
             "image_url": "https://files.stripe.com/links/MDB8YWNjdF8xUUl6UVVMRU9aRnhHbkJIfGZsX3Rlc3RfR3RBNFlHcHBWQUlsOUN4Yzl0anlkRU9L00iPDXEbTc"
         }

@@ -525,11 +525,13 @@ export function ShoppingCart() {
                     conversation_history: conversationHistory
                 };
 
+
                 // Log what we're sending
                 console.log('=== SENDING TO BACKEND ===');
                 console.log('Order Details:', JSON.stringify(orderDetails, null, 2));
                 console.log('Conversation History Length:', conversationHistory.length);
                 console.log('Sample Messages:', conversationHistory.slice(0, 3));
+
 
                 // Call the Nekuda browser checkout service endpoint
                 const response = await fetch('http://localhost:8001/api/browser-checkout', {

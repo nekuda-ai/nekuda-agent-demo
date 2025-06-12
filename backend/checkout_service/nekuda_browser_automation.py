@@ -153,6 +153,7 @@ Steps:
 - Use all details from SDK response (card, expiry, CVV, name, address, etc.)
 - Phone number goes at the end of form
 - Default CVV to 123 if not provided
+- Billing address should be the same as shipping address (keep the checkbox the same)
 
 **Error Handling:**
 - Max 2 retries per action

@@ -294,7 +294,7 @@ export function ShoppingCart() {
                 const existingItem = prev.find(item => item.id === productId);
 
                 if (existingItem) {
-                    console.log(`Adding ${quantity} to existing item. Current quantity: ${existingItem.quantity}`);
+                    console.log(`Adding product ${product.name} with quantity ${quantity} to existing item. Current quantity: ${existingItem.quantity}`);
                     return prev.map(item =>
                         item.id === productId
                             ? { ...item, quantity: item.quantity + quantity }
@@ -474,7 +474,7 @@ export function ShoppingCart() {
                     checkout_url: 'https://nekuda-store-frontend.onrender.com/',
                     payment_method: 'nekuda_sdk'
                 };
-
+                console.log('sending to checkout service Order details:', orderDetails);
                 // Call the Nekuda browser checkout service endpoint
                 const response = await fetch('http://localhost:8001/api/browser-checkout', {
                     method: 'POST',

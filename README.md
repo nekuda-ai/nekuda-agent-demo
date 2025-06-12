@@ -42,7 +42,7 @@ If you’re building agents, you can use this code as a template to embed agenti
 - **Git**
 - **nekuda API key** (from [nekuda](https://nekuda.ai))
 - **CopilotKit API key** (from [copilotkit](https://www.copilotkit.ai/))
-- **Anthropic API key**
+- **OpenAI API key**
 
 ### ⚡ Super Easy Setup (2 steps)
 
@@ -78,7 +78,7 @@ Edit your `.env` file with your API credentials:
 ```env
 # Backend: nekuda SDK Configuration
 NEKUDA_API_KEY=your_nekuda_api_key
-ANTHROPIC_API_KEY=your_anthropic_api_key
+OPENAI_API_KEY=your_openai_api_key
 
 # Frontend: CopilotKit Configuration (VITE_ prefix required for frontend)
 VITE_NEKUDA_PUBLIC_KEY=your_nekuda_public_key

@@ -91,6 +91,8 @@ def add_payment_details_handler_to_controller(controller: Controller):
             print(
                 f"Attempting to create mandate for user_id: {purchase_intent.user_id} with request_id: {mandate_data.request_id}"
             )
+            # Note: The conversation history context is passed through the browser automation agent
+            # which has access to the full order context including conversation history
             user_api = nekuda_client.user(purchase_intent.user_id)
             mandate_response = user_api.create_mandate(mandate_data)
 

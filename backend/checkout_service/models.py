@@ -14,6 +14,7 @@ class BrowserCheckoutRequest(BaseModel):
     total: float
     merchant_name: str = "nekuda Store"
     checkout_url: str
+    conversation_history: Optional[List[Dict[str, Any]]] = None
 
 
 class OrderItem(BaseModel):
@@ -59,7 +60,26 @@ class PaymentSummary(BaseModel):
 class PurchaseIntent(BaseModel):
     """Purchase intent model with User ID and MandateData."""
     user_id: str
-    mandate_data: MandateData
+    mandate_data: MandateData = Field(
+        description="""The mandate data for the purchase intent. Contains the following fields:
+
+        Product Information:
+        - product: Optional[str] = None - The product name/identifier
+        - product_description: Optional[str] = None - Detailed product description
+        - price: Optional[float] = None - Product price
+        - currency: Optional[str] = None - Currency code (e.g., USD, EUR)
+        - merchant: Optional[str] = None - Merchant/store name
+        - merchant_link: Optional[str] = None - Link to merchant's website/store
+
+        Contextual/Conversational Metadata:
+        - confidence_score: Optional[float] = None - AI confidence in the mandate extraction
+        - conversation_context: Optional[Mapping[str, Any]] = None - Context from conversation
+        - human_messages: Optional[List[str]] = None - Relevant human messages
+        - additional_details: Optional[Mapping[str, Any]] = None - Any additional contextual data
+
+        Internal Fields:
+        - request_id: str - Unique idempotency key (automatically generated)"""
+    )
 
 
 class OrderIntent(BaseModel):
@@ -74,6 +94,7 @@ class OrderIntent(BaseModel):
     delivery_instructions: Optional[str] = None
     order_items: List[OrderItem] = []
     payment_summary: Optional[PaymentSummary] = None
+    conversation_history: Optional[List[Dict[str, Any]]] = None
 
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)

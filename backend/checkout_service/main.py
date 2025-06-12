@@ -23,6 +23,16 @@ async def browser_checkout(request: BrowserCheckoutRequest):
     """Complete checkout using browser automation with nekuda SDK payment details."""
     try:
         print(f"Starting nekuda browser checkout for user: {request.user_id}")
+        
+        # Log conversation history if provided
+        if request.conversation_history:
+            print(f"Conversation history received with {len(request.conversation_history)} messages")
+            # You can process or store the conversation history here
+            # For now, we'll just log a summary
+            for i, msg in enumerate(request.conversation_history[-5:]):  # Last 5 messages
+                print(f"Message {i+1}: Type={msg.get('type')}, Role={msg.get('role', 'N/A')}")
+                if msg.get('type') == 'text':
+                    print(f"  Content: {msg.get('content', '')[:100]}...")  # First 100 chars
 
         # Prepare order details for nekuda browser automation
         order_intent = OrderIntent(
@@ -40,6 +50,11 @@ async def browser_checkout(request: BrowserCheckoutRequest):
                 for item in request.items
             ],
         )
+        
+        # Store conversation history in order_intent for potential future use
+        # (e.g., analytics, customer service, personalization)
+        if request.conversation_history:
+            order_intent.conversation_history = request.conversation_history
 
         await run_order_automation(order_intent)
 

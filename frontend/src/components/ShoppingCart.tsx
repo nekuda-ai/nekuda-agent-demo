@@ -25,16 +25,16 @@ export function ShoppingCart() {
     // Try to use cart context if available, otherwise use local state
     const cartContext = React.useContext(CartContext);
     const [localCartItems, setLocalCartItems] = useState<CartItem[]>([]);
-    
+
     // Use context cart items if available, otherwise use local state
     const cartItems = cartContext?.cartItems || localCartItems;
     const setCartItems = cartContext?.setCartItems || setLocalCartItems;
-    
+
     const [purchaseHistory, setPurchaseHistory] = useState<string[]>([]);
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    
+
     // Get access to chat messages and functions
     const { visibleMessages, appendMessage } = useCopilotChat();
 
@@ -304,8 +304,8 @@ export function ShoppingCart() {
                 return `Product ${productId} not found. Available products: ${products.map(p => p.id).join(', ')}`;
             }
 
-            setCartItems(prev => {
-                const existingItem = prev.find(item => item.id === productId);
+            setCartItems((prev: CartItem[]) => {
+                const existingItem = prev.find((item: { id: string; }) => item.id === productId);
 
                 if (existingItem) {
                     console.log(`Adding ${quantity} to existing item. Current quantity: ${existingItem.quantity}`);
@@ -372,7 +372,7 @@ export function ShoppingCart() {
             });
 
             return (
-                <CartCard 
+                <CartCard
                     items={enrichedCartItems}
                     total={total}
                     onRemoveItem={(itemId) => {
@@ -411,7 +411,7 @@ export function ShoppingCart() {
                 return `Product ${productId} not found in cart`;
             }
 
-            setCartItems(prev => {
+            setCartItems((prev: CartItem[]) => {
                 if (quantity === undefined || quantity >= existingItem.quantity) {
                     // Remove entire item
                     return prev.filter((item: CartItem) => item.id !== productId);
@@ -653,4 +653,4 @@ export function ShoppingCart() {
             )}
         </div>
     );
-} 
+}

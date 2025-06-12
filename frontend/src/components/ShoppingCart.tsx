@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useCopilotAction, useCopilotReadable } from '@copilotkit/react-core';
+import { useCopilotAction, useCopilotReadable, useCopilotChat } from '@copilotkit/react-core';
 
 interface Product {
     id: string;
@@ -23,6 +23,9 @@ export function ShoppingCart() {
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    
+    // Get access to chat messages
+    const { visibleMessages } = useCopilotChat();
 
     // Clear cart on app open/refresh
     useEffect(() => {
@@ -464,6 +467,33 @@ export function ShoppingCart() {
             const fixedMerchantName = "nekuda Store";
 
             try {
+                // Prepare conversation history
+                const conversationHistory = visibleMessages.map(msg => {
+                    if (msg.isTextMessage()) {
+                        return {
+                            type: 'text',
+                            role: msg.role,
+                            content: msg.content,
+                            timestamp: msg.createdAt
+                        };
+                    } else if (msg.isActionExecutionMessage()) {
+                        return {
+                            type: 'action',
+                            name: msg.name,
+                            arguments: msg.arguments,
+                            timestamp: msg.createdAt
+                        };
+                    } else if (msg.isResultMessage()) {
+                        return {
+                            type: 'result',
+                            actionName: msg.actionName,
+                            result: msg.result,
+                            timestamp: msg.createdAt
+                        };
+                    }
+                    return null;
+                }).filter(Boolean);
+
                 // Prepare order details for nekuda browser automation
                 const orderDetails = {
                     user_id: fixedUserId,
@@ -472,8 +502,15 @@ export function ShoppingCart() {
                     total: total,
                     merchant_name: fixedMerchantName,
                     checkout_url: 'https://nekuda-store-frontend.onrender.com/',
-                    payment_method: 'nekuda_sdk'
+                    payment_method: 'nekuda_sdk',
+                    conversation_history: conversationHistory
                 };
+
+                // Log what we're sending
+                console.log('=== SENDING TO BACKEND ===');
+                console.log('Order Details:', JSON.stringify(orderDetails, null, 2));
+                console.log('Conversation History Length:', conversationHistory.length);
+                console.log('Sample Messages:', conversationHistory.slice(0, 3));
 
                 // Call the Nekuda browser checkout service endpoint
                 const response = await fetch('http://localhost:8001/api/browser-checkout', {

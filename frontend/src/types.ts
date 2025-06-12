@@ -76,4 +76,26 @@ export interface NekudaSubmissionResult {
     cardTokenId?: string;
     message?: string;
     [key: string]: any; // For any other properties
-} 
+}
+
+export interface ConversationMessage {
+    type: 'text' | 'action' | 'result';
+    role?: string;
+    content?: string;
+    name?: string;
+    arguments?: Record<string, any>;
+    actionName?: string;
+    result?: string;
+    timestamp: Date | string;
+}
+
+export interface OrderIntent {
+    user_id: string;
+    store_id: string;
+    items: OrderItem[];
+    total: number;
+    merchant_name: string;
+    checkout_url: string;
+    payment_method?: string;
+    conversation_history?: ConversationMessage[];
+}

@@ -109,18 +109,18 @@ Order details:
 - Items: {items_summary}
 - Total: ${total_price}
 - User ID: {order_intent.user_id}
+- purchase intent: {order_intent}
 
 Steps:
 1. Add the exact items to cart (verify each product by name before clicking)
 2. Go to checkout
 3. Use Nekuda SDK actions in order: Create Purchase Intent → Get Card Reveal Token → Get Payment Details
-4. Fill checkout form with the revealed payment details
+4. Fill checkout form with the revealed payment details, never complete OTP/verification windows, always close them
 5. Complete the purchase
 """
 
     # Detailed context for the agent
-    message_context = f"""
-Important Guidelines:
+    message_context = """Important Guidelines:
 
 **Cart Management:**
 - Always scroll to see all products first
@@ -129,7 +129,17 @@ Important Guidelines:
 - For multiple quantities, click Add to Cart multiple times
 
 **Nekuda SDK Flow:**
-1. Create Purchase Intent
+1. Create Purchase Intent filling the purchase intent with the following details:
+- user_id: {order_intent.user_id}
+- product: {order_intent.product}
+- product_description: {order_intent.product_description}
+- price: {order_intent.price}
+- currency: {order_intent.currency}
+- merchant: {order_intent.merchant}
+- conversation_context: {order_intent.conversation_history}
+- human_messages: {order_intent.human_messages}
+- additional_details: {order_intent.additional_details}
+
 2. Extract Mandate ID from response
 3. Get Card Reveal Token using the Mandate ID (id should be digits only)
 4. Extract Reveal Token from response
@@ -138,7 +148,7 @@ Important Guidelines:
 
 **Checkout Form:**
 - Email: test.user@example.com (ALWAYS exit OTP windows without completing it)
-- IMPORTANT: If OTP window is detected, close it
+- IMPORTANT: If popup window is detected, close it
 - IMPORTANT: Click "Enter address manually" button if present before filling address
 - Use all details from SDK response (card, expiry, CVV, name, address, etc.)
 - Phone number goes at the end of form

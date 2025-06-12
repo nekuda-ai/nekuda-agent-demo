@@ -1,5 +1,9 @@
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useCopilotAction, useCopilotReadable, useCopilotChat } from '@copilotkit/react-core';
+import { TextMessage, Role } from '@copilotkit/runtime-client-gql';
+import { CartCard } from './CartCard';
+import { CartContext } from './ShoppingLayout';
+import { ProductUpdate } from './ProductUpdate';
 
 interface Product {
     id: string;
@@ -18,14 +22,21 @@ interface CartItem {
 }
 
 export function ShoppingCart() {
-    const [cartItems, setCartItems] = useState<CartItem[]>([]);
+    // Try to use cart context if available, otherwise use local state
+    const cartContext = React.useContext(CartContext);
+    const [localCartItems, setLocalCartItems] = useState<CartItem[]>([]);
+    
+    // Use context cart items if available, otherwise use local state
+    const cartItems = cartContext?.cartItems || localCartItems;
+    const setCartItems = cartContext?.setCartItems || setLocalCartItems;
+    
     const [purchaseHistory, setPurchaseHistory] = useState<string[]>([]);
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     
-    // Get access to chat messages
-    const { visibleMessages } = useCopilotChat();
+    // Get access to chat messages and functions
+    const { visibleMessages, appendMessage } = useCopilotChat();
 
     // Clear cart on app open/refresh
     useEffect(() => {
@@ -260,7 +271,7 @@ export function ShoppingCart() {
         },
     });
 
-    // Action to add items to cart
+    // Action to add items to cart with automatic cart display
     useCopilotAction({
         name: "addToCart",
         description: "Add a specified quantity of a product to the shopping cart. If the user provides a product name, use the availableProducts context (which includes product IDs, names, descriptions, and categories) to find the correct productId before calling this action. If multiple products match, ask for clarification.",
@@ -298,7 +309,7 @@ export function ShoppingCart() {
 
                 if (existingItem) {
                     console.log(`Adding ${quantity} to existing item. Current quantity: ${existingItem.quantity}`);
-                    return prev.map(item =>
+                    return prev.map((item: CartItem) =>
                         item.id === productId
                             ? { ...item, quantity: item.quantity + quantity }
                             : item
@@ -316,9 +327,28 @@ export function ShoppingCart() {
 
             return `Added ${quantity}x ${product.name} to cart!`;
         },
+        render: ({ status, args }: any) => {
+            // Only show product update after the action completes
+            if (status === "complete" && args) {
+                const product = products.find((p: Product) => p.id === args.productId);
+                if (product) {
+                    return (
+                        <ProductUpdate
+                            product={{
+                                ...product,
+                                quantity: args.quantity || 1
+                            }}
+                            action="added"
+                            quantity={args.quantity || 1}
+                        />
+                    );
+                }
+            }
+            return <></>;
+        },
     });
 
-    // Action to view cart
+    // Action to view cart - now using the beautiful CartCard component
     useCopilotAction({
         name: "viewCart",
         description: "Show current shopping cart contents",
@@ -329,77 +359,35 @@ export function ShoppingCart() {
             }
 
             const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-
-            // Log actual cart state for debugging
-            console.log('ViewCart - Current cart state:', cartItems);
-            console.log('ViewCart - Item count:', itemCount, 'Total:', total.toFixed(2));
-
-            return `CART DISPLAY: The visual cart component below shows the complete and accurate cart contents. Total items: ${itemCount}, Total price: $${total.toFixed(2)}. DO NOT provide additional text summaries as they may be inaccurate.`;
+            return `Cart updated: ${itemCount} items, total $${total.toFixed(2)}`;
         },
         render: () => {
-            if (cartItems.length === 0) {
-                return (
-                    <div className="p-6 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                        <div className="text-center">
-                            <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                            </svg>
-                            <h3 className="text-lg font-medium text-gray-900 mt-2">Your Cart is Empty</h3>
-                            <p className="text-gray-500">Add some amazing Nekuda products to get started!</p>
-                        </div>
-                    </div>
-                );
-            }
-
-            const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+            // Map cart items to include image URLs from products
+            const enrichedCartItems = cartItems.map(item => {
+                const product = products.find(p => p.id === item.id);
+                return {
+                    ...item,
+                    image_url: product?.image_url
+                };
+            });
 
             return (
-                <div className="p-6 bg-green-50 rounded-lg">
-                    <h3 className="text-xl font-bold text-green-800 mb-4 flex items-center">
-                        🛒 <span className="ml-2">Your Shopping Cart ({itemCount} items)</span>
-                    </h3>
-                    <div className="space-y-4">
-                        {cartItems.map((item) => {
-                            const product = products.find(p => p.id === item.id);
-                            const itemTotal = (item.price * item.quantity).toFixed(2);
-
-                            return (
-                                <div key={item.id} className="bg-white rounded-lg border border-green-200 p-4 shadow-sm">
-                                    <div className="flex items-start space-x-3">
-                                        {product?.image_url && (
-                                            <img
-                                                src={product.image_url}
-                                                alt={item.name}
-                                                className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
-                                            />
-                                        )}
-                                        <div className="flex-1 min-w-0">
-                                            <h4 className="font-semibold text-gray-900 text-sm">{item.name}</h4>
-                                            <div className="flex justify-between items-center mt-2">
-                                                <div className="text-sm text-gray-600">
-                                                    ${item.price} each × {item.quantity}
-                                                </div>
-                                                <span className="text-lg font-bold text-green-600">${itemTotal}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                    <div className="mt-6 pt-4 border-t border-green-200">
-                        <div className="flex justify-between items-center">
-                            <span className="text-xl font-bold text-gray-900">Total:</span>
-                            <span className="text-2xl font-bold text-green-600">${total.toFixed(2)}</span>
-                        </div>
-                        <p className="text-sm text-green-700 mt-2">Ready to checkout? Just say "complete purchase" to proceed!</p>
-                    </div>
-                </div>
+                <CartCard 
+                    items={enrichedCartItems}
+                    total={total}
+                    onRemoveItem={(itemId) => {
+                        setCartItems((prev: CartItem[]) => prev.filter((item: CartItem) => item.id !== itemId));
+                    }}
+                    onCheckout={() => {
+                        // This could trigger the complete purchase action
+                        console.log("Checkout triggered from CartCard");
+                    }}
+                />
             );
         },
     });
 
-    // Action to remove items from cart
+    // Action to remove items from cart with cart display
     useCopilotAction({
         name: "removeFromCart",
         description: "Remove items from the shopping cart",
@@ -426,10 +414,10 @@ export function ShoppingCart() {
             setCartItems(prev => {
                 if (quantity === undefined || quantity >= existingItem.quantity) {
                     // Remove entire item
-                    return prev.filter(item => item.id !== productId);
+                    return prev.filter((item: CartItem) => item.id !== productId);
                 } else {
                     // Reduce quantity
-                    return prev.map(item =>
+                    return prev.map((item: CartItem) =>
                         item.id === productId
                             ? { ...item, quantity: item.quantity - quantity }
                             : item
@@ -438,7 +426,29 @@ export function ShoppingCart() {
             });
 
             const removedQty = quantity === undefined ? existingItem.quantity : Math.min(quantity, existingItem.quantity);
-            return `Removed ${removedQty}x ${existingItem.name} from cart`;
+            const remainingQty = existingItem.quantity - removedQty;
+            return `Removed ${removedQty}x ${existingItem.name} from cart${remainingQty > 0 ? `. ${remainingQty} remaining.` : '.'}`;
+        },
+        render: ({ status, args }: any) => {
+            // Show product update after removal
+            if (status === "complete" && args) {
+                const product = products.find((p: Product) => p.id === args.productId);
+                const existingItem = cartItems.find((item: CartItem) => item.id === args.productId);
+                if (product && existingItem) {
+                    return (
+                        <ProductUpdate
+                            product={{
+                                ...product,
+                                quantity: existingItem.quantity
+                            }}
+                            action="removed"
+                            quantity={existingItem.quantity}
+                            previousQuantity={existingItem.quantity + (args.quantity || existingItem.quantity)}
+                        />
+                    );
+                }
+            }
+            return <></>;
         },
     });
 
@@ -456,7 +466,16 @@ export function ShoppingCart() {
     useCopilotAction({
         name: "completePurchase",
         description: "Complete the purchase of items in cart using nekuda SDK and browser automation.",
-        parameters: [], // No parameters needed from user, userId and merchantName are now fixed
+        parameters: [],
+        render: ({ status }: any) => {
+            if (status === "executing") {
+                return "Starting purchase, this will take a few minutes...";
+            }
+            if (status === "complete") {
+                return "Completing the purchase. Please hold on...";
+            }
+            return "";
+        },
         handler: async () => {
             if (cartItems.length === 0) {
                 return "Cannot complete purchase - your cart is empty!";
@@ -537,7 +556,7 @@ export function ShoppingCart() {
 
                     return `🎉 Purchase completed successfully using nekuda SDK + Browser Automation!\n\n✅ Order ID: ${orderId}\n👤 User: ${fixedUserId}\n💰 Total: $${total.toFixed(2)}\n📦 Items: ${itemsSummary}\n🔐 Payment: Real Nekuda SDK credentials\n🤖 Method: AI Browser Automation\n\nYour cart has been cleared.`;
                 } else {
-                    return `❌ Purchase failed via nnekuda SDK: ${result.message || 'Unknown error'}. Please try again.`;
+                    return `❌ Purchase failed via nekuda SDK: ${result.message || 'Unknown error'}. Please try again.`;
                 }
 
             } catch (error) {

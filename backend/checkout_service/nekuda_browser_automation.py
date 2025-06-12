@@ -115,7 +115,7 @@ Steps:
 1. Add the exact items to cart (verify each product by name before clicking)
 2. Go to checkout
 3. Use Nekuda SDK actions in order: Create Purchase Intent → Get Card Reveal Token → Get Payment Details
-4. Fill checkout form with the revealed payment details, never complete OTP/verification windows, always close them
+4. Fill checkout form with the revealed payment details, NEVER complete popup windows with email or phone verification, ALWAYS close them
 5. Complete the purchase
 """
 
@@ -160,7 +160,7 @@ Steps:
 - Max 3 retries for final Pay button
 - Close/bypass any popups
 - Don't toggle checkboxes
-- ALWAYS close OTP window including email and phone verification
+- ALWAYS close popup windows including email and phone verification
 """
 
     # 5. Initialize and Run the Agent

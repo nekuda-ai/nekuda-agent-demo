@@ -297,7 +297,7 @@ export function ShoppingCart() {
                 const existingItem = prev.find(item => item.id === productId);
 
                 if (existingItem) {
-                    console.log(`Adding ${quantity} to existing item. Current quantity: ${existingItem.quantity}`);
+                    console.log(`Adding product ${product.name} with quantity ${quantity} to existing item. Current quantity: ${existingItem.quantity}`);
                     return prev.map(item =>
                         item.id === productId
                             ? { ...item, quantity: item.quantity + quantity }
@@ -324,20 +324,48 @@ export function ShoppingCart() {
         description: "Show current shopping cart contents",
         parameters: [],
         handler: async () => {
-            if (cartItems.length === 0) {
-                return "Your cart is empty. Add some products to get started!";
-            }
-
-            const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+            // Capture cart state at the time this action is called to freeze it for this specific display
+            const snapshotCartItems = [...cartItems];
+            const snapshotProducts = [...products];
+            const snapshotTotal = snapshotCartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const itemCount = snapshotCartItems.reduce((sum, item) => sum + item.quantity, 0);
 
             // Log actual cart state for debugging
-            console.log('ViewCart - Current cart state:', cartItems);
-            console.log('ViewCart - Item count:', itemCount, 'Total:', total.toFixed(2));
+            console.log('ViewCart - Snapshot cart state:', snapshotCartItems);
+            console.log('ViewCart - Item count:', itemCount, 'Total:', snapshotTotal.toFixed(2));
 
-            return `CART DISPLAY: The visual cart component below shows the complete and accurate cart contents. Total items: ${itemCount}, Total price: $${total.toFixed(2)}. DO NOT provide additional text summaries as they may be inaccurate.`;
+            if (snapshotCartItems.length === 0) {
+                return {
+                    message: "Your cart is empty. Add some products to get started!",
+                    cartSnapshot: {
+                        items: [],
+                        products: snapshotProducts,
+                        total: 0,
+                        itemCount: 0,
+                        isEmpty: true
+                    }
+                };
+            }
+
+            return {
+                message: `CART DISPLAY: The visual cart component below shows the complete and accurate cart contents. Total items: ${itemCount}, Total price: $${snapshotTotal.toFixed(2)}. DO NOT provide additional text summaries as they may be inaccurate.`,
+                cartSnapshot: {
+                    items: snapshotCartItems,
+                    products: snapshotProducts,
+                    total: snapshotTotal,
+                    itemCount: itemCount,
+                    isEmpty: false
+                }
+            };
         },
-        render: () => {
-            if (cartItems.length === 0) {
+        render: ({ result }) => {
+            const snapshot = result?.cartSnapshot;
+
+            if (!snapshot) {
+                return <div className="p-4 text-red-500">Error: Cart snapshot not available</div>;
+            }
+
+            if (snapshot.isEmpty) {
                 return (
                     <div className="p-6 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
                         <div className="text-center">
@@ -351,16 +379,14 @@ export function ShoppingCart() {
                 );
             }
 
-            const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-
             return (
                 <div className="p-6 bg-green-50 rounded-lg">
                     <h3 className="text-xl font-bold text-green-800 mb-4 flex items-center">
-                        🛒 <span className="ml-2">Your Shopping Cart ({itemCount} items)</span>
+                        🛒 <span className="ml-2">Your Shopping Cart ({snapshot.itemCount} items)</span>
                     </h3>
                     <div className="space-y-4">
-                        {cartItems.map((item) => {
-                            const product = products.find(p => p.id === item.id);
+                        {snapshot.items.map((item: CartItem) => {
+                            const product = snapshot.products.find((p: Product) => p.id === item.id);
                             const itemTotal = (item.price * item.quantity).toFixed(2);
 
                             return (
@@ -390,7 +416,7 @@ export function ShoppingCart() {
                     <div className="mt-6 pt-4 border-t border-green-200">
                         <div className="flex justify-between items-center">
                             <span className="text-xl font-bold text-gray-900">Total:</span>
-                            <span className="text-2xl font-bold text-green-600">${total.toFixed(2)}</span>
+                            <span className="text-2xl font-bold text-green-600">${snapshot.total.toFixed(2)}</span>
                         </div>
                         <p className="text-sm text-green-700 mt-2">Ready to checkout? Just say "complete purchase" to proceed!</p>
                     </div>
@@ -506,11 +532,13 @@ export function ShoppingCart() {
                     conversation_history: conversationHistory
                 };
 
+
                 // Log what we're sending
                 console.log('=== SENDING TO BACKEND ===');
                 console.log('Order Details:', JSON.stringify(orderDetails, null, 2));
                 console.log('Conversation History Length:', conversationHistory.length);
                 console.log('Sample Messages:', conversationHistory.slice(0, 3));
+
 
                 // Call the Nekuda browser checkout service endpoint
                 const response = await fetch('http://localhost:8001/api/browser-checkout', {

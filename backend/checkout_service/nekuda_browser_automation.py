@@ -33,9 +33,9 @@ def get_llm_model(model_type="openai", is_planner=False):
                 model="gpt-3.5-turbo", temperature=0, max_tokens=1000, timeout=15
             )
         else:
-            print("Initializing Main LLM (OpenAI GPT-4 Mini)...")
+            print("Initializing Main LLM (OpenAI GPT-4o)...")
             return ChatOpenAI(
-                model="gpt-4o-mini", temperature=0, max_tokens=4000, timeout=30
+                model="gpt-4o", temperature=0, max_tokens=4000, timeout=30
             )
     elif model_type.lower() == "anthropic":
         if not os.getenv("ANTHROPIC_API_KEY"):
@@ -83,7 +83,7 @@ async def run_order_automation(order_intent: OrderIntent):
 
     # 2. Setup LLM - Use OpenAI by default, can be changed to "anthropic"
     try:
-        model_type = "anthropic"  # Change to "openai" if needed
+        model_type = "openai"  # Change to "openai" if needed
         llm = get_llm_model(model_type)
         # planner_llm = get_llm_model(model_type, is_planner=True)
     except ValueError as e:
@@ -170,7 +170,7 @@ Steps:
         controller=controller,
         browser_session=browser_session,
         initial_actions=initial_actions,
-        use_vision=True,
+        use_vision=False,
         message_context=message_context,  # Add detailed context
         max_failures=3,  # Limit consecutive failures
         generate_gif=f"test_nekuda_payment_flow_{datetime.now().strftime('%Y%m%d_%H%M%S')}.gif",

@@ -1,25 +1,22 @@
 # 🛍️ nekuda AI Shopping Assistant Demo
 
-A modern e-commerce demonstration showcasing AI-powered shopping assistance with **nekuda SDK** payment integration, and browser automation for seamless checkout experiences.
+A commerce agent using the **nekuda SDK** to store credit cards and complete checkouts. You can run it in under 2 minutes and see a full end-to-end example of an agent completing checkouts with a credit card using nekuda. 
+
+If you’re building agents, you can use this code as a template to embed agentic payments in your agent.
+
+**Feedback welcome: founders@nekuda.ai**
 
 ## 🌟 Features
-
 ### 🤖 AI Shopping Assistant
-- **Natural Language Shopping**: Chat with AI to browse products, search, and add items to cart
-- **CopilotKit Integration**: Powerful AI actions for seamless user experience
-- **Smart Product Search**: Find products by name, description, or category
-- **Cart Management**: Add, remove, and view cart items through conversation
+- **Chat Shopping**: Browse and add items via chat  
+- **CopilotKit**: AI actions for smoother UX  
+- **Smart Search**: Find by name, description, or category  
+- **Cart Control**: Add, remove, or view items via chat
 
-### 💳 Advanced Payment Processing
-- **nekuda SDK Integration**: Real cryptocurrency payment processing
-- **Browser Automation**: AI-powered automated checkout process
-- **Multi-Service Architecture**: Separate services for store and payment processing
-
-### 🎨 Modern UI/UX
-- **React + TypeScript**: Type-safe modern frontend
-- **Tailwind CSS**: Beautiful, responsive design
-- **Real-time Updates**: Live cart and product state management
-- **Mobile-Friendly**: Responsive design for all devices
+### 💳 Payment System
+- **Credit Card Handling**: Collect and reuse cards with [nekuda SDK](https://docs.nekuda.ai/introduction), no PCI scope. Stores transactions and data in the [nekuda dashboard](https://app.nekuda.ai/dashboard).  
+- **Modular Design**: Frontend, backend, and checkout are decoupled.  
+- **Checkout Agent**: Cart is sent as a payment intent to a browser agent that completes the purchase.
 
 ## 🏗️ Architecture
 
@@ -43,6 +40,9 @@ A modern e-commerce demonstration showcasing AI-powered shopping assistance with
 - **Node.js** (v18 or higher)
 - **Python** (v3.8 or higher)
 - **Git**
+- **nekuda API key** (from [nekuda](https://nekuda.ai))
+- **CopilotKit API key** (from [copilotkit](https://www.copilotkit.ai/))
+- **Anthropic API key**
 
 ### ⚡ Super Easy Setup (2 steps)
 
@@ -161,6 +161,9 @@ Try these natural language commands with the AI assistant:
 - **Checkout Service** (`backend/checkout_service/`) - Payment processing and browser automation
 
 ## 🛠️ Development
+
+### Store Configuration
+This demo uses a simple JSON file (`backend/store_api/nekuda.json`) to define the product catalog, making it easy to modify inventory without database setup. You can create multiple store JSON files for different catalogs, or integrate with external APIs and discovery services to dynamically load product data from existing e-commerce platforms or inventory management systems.
 
 ### Adding New Products
 Edit `backend/store_api/nekuda.json` to add new products:

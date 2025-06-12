@@ -91,7 +91,9 @@ async def run_order_automation(order_intent: OrderIntent):
         return
 
     # 3. Define Initial Actions
-    initial_actions = [{"go_to_url": {"url": order_intent.checkout_url}, "wait": {"seconds": 5}}]
+    initial_actions = [
+        {"go_to_url": {"url": order_intent.checkout_url}, "wait": {"seconds": 5}}
+    ]
 
     # 4. Define the Agent Task Prompt
     # Calculate total price and create items summary
@@ -129,7 +131,7 @@ Important Guidelines:
 - For multiple quantities, click Add to Cart multiple times
 
 **Nekuda SDK Flow:**
-1. Create Purchase Intent
+1. Create Purchase Intent with the following mandate data: {order_intent.mandate_data}
 2. Extract Mandate ID from response
 3. Get Card Reveal Token using the Mandate ID (id should be digits only)
 4. Extract Reveal Token from response

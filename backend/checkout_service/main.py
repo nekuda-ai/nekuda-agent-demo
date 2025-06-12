@@ -30,6 +30,7 @@ async def browser_checkout(request: BrowserCheckoutRequest):
             store_id=request.store_id,
             checkout_url=request.checkout_url,
             merchant_name=request.merchant_name,
+            mandate_data=request.mandate_data,
             order_items=[
                 OrderItem(
                     item_id=item["id"],

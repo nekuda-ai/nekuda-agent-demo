@@ -43,7 +43,7 @@ def get_llm_model(model_type="openai", is_planner=False):
 
         if is_planner:
             print("Initializing Planner LLM (Claude 3 Haiku)...")
-            return ChatAnthropic(model="claude-3-haiku-20241022", temperature=0)
+            return ChatAnthropic(model="claude-3-7-sonnet-20250219", temperature=0)
         else:
             print("Initializing Main LLM (Claude 3.5 Haiku)...")
             return ChatAnthropic(model="claude-3-5-haiku-20241022")
@@ -79,6 +79,8 @@ async def run_order_automation(order_intent: OrderIntent):
             "width": 1020,
             "height": 1020,
         },
+        viewport_expansion=-1,
+        include_dynamic_attributes=True,
     )
 
     # 2. Setup LLM - Use OpenAI by default, can be changed to "anthropic"
@@ -123,7 +125,6 @@ Steps:
     message_context = """Important Guidelines:
 
 **Cart Management:**
-- Always scroll to see all products first
 - Identify products by their text/name, NOT by button index
 - Verify correct items, and quantities are in cart before checkout
 - For multiple quantities, click Add to Cart multiple times
@@ -168,6 +169,7 @@ Steps:
     agent = Agent(
         task=task_prompt,
         llm=llm,
+        use_vision=True,
         controller=controller,
         browser_session=browser_session,
         initial_actions=initial_actions,

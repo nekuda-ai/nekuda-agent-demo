@@ -85,7 +85,7 @@ async def run_order_automation(order_intent: OrderIntent):
 
     # 2. Setup LLM - Use OpenAI by default, can be changed to "anthropic"
     try:
-        model_type = "openai"  # Change to "openai" if needed
+        model_type = "anthropic"  # Change to "openai" if needed
         llm = get_llm_model(model_type)
         # planner_llm = get_llm_model(model_type, is_planner=True)
     except ValueError as e:
@@ -173,7 +173,6 @@ Steps:
         controller=controller,
         browser_session=browser_session,
         initial_actions=initial_actions,
-        use_vision=False,
         message_context=message_context,  # Add detailed context
         max_failures=3,  # Limit consecutive failures
         generate_gif=f"test_nekuda_payment_flow_{datetime.now().strftime('%Y%m%d_%H%M%S')}.gif",

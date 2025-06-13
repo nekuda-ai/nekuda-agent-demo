@@ -469,12 +469,14 @@ export function ShoppingCart() {
         parameters: [],
         render: ({ status }: any) => {
             if (status === "executing") {
-                return "Starting purchase, this will take a few minutes...";
+                return (
+                    <div className="flex items-center space-x-2 p-4 bg-blue-50 rounded-lg">
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                        <span className="text-blue-700">Processing your purchase with nekuda automation...</span>
+                    </div>
+                );
             }
-            if (status === "complete") {
-                return "Completing the purchase. Please hold on...";
-            }
-            return "";
+            return <></>;
         },
         handler: async () => {
             if (cartItems.length === 0) {
@@ -525,13 +527,11 @@ export function ShoppingCart() {
                     conversation_history: conversationHistory
                 };
 
-
                 // Log what we're sending
                 console.log('=== SENDING TO BACKEND ===');
                 console.log('Order Details:', JSON.stringify(orderDetails, null, 2));
                 console.log('Conversation History Length:', conversationHistory.length);
                 console.log('Sample Messages:', conversationHistory.slice(0, 3));
-
 
                 // Call the Nekuda browser checkout service endpoint
                 const response = await fetch('http://localhost:8001/api/browser-checkout', {
@@ -547,19 +547,48 @@ export function ShoppingCart() {
                     return `❌ Checkout with Nekuda SDK failed: ${errorData.detail || 'Unknown error'}. Please try again.`;
                 }
 
-                const result = await response.json();
+                const initialResult = await response.json();
+                const purchaseId = initialResult.purchase_id;
 
-                if (result.success) {
-                    const orderId = result.store_order_id || `NEKUDA-${Date.now()}`;
-                    const itemsSummary = cartItems.map(item => `${item.quantity}x ${item.name}`).join(', ');
 
-                    setPurchaseHistory(prev => [...prev, `Order ${orderId}: ${itemsSummary} - $${total.toFixed(2)} (Nekuda SDK + Browser)`]);
-                    setCartItems([]);
+                // Poll for status updates
+                const maxAttempts = 60; // 60 attempts * 5 seconds = 5 minutes max
+                let attempts = 0;
 
-                    return `🎉 Purchase completed successfully using nekuda SDK + Browser Automation!\n\n✅ Order ID: ${orderId}\n👤 User: ${fixedUserId}\n💰 Total: $${total.toFixed(2)}\n📦 Items: ${itemsSummary}\n🔐 Payment: Real Nekuda SDK credentials\n🤖 Method: AI Browser Automation\n\nYour cart has been cleared.`;
-                } else {
-                    return `❌ Purchase failed via nekuda SDK: ${result.message || 'Unknown error'}. Please try again.`;
+                while (attempts < maxAttempts) {
+                    attempts++;
+
+                    // Wait 5 seconds between polls
+                    await new Promise(resolve => setTimeout(resolve, 5000));
+
+                    // Check status
+                    const statusResponse = await fetch(`http://localhost:8001/api/purchase-status/${purchaseId}`);
+
+                    if (!statusResponse.ok) {
+                        return `❌ Error checking purchase status. Please try again.`;
+                    }
+
+                    const statusData = await statusResponse.json();
+
+
+                    if (statusData.status === "completed") {
+                        const result = statusData.result || {};
+                        const orderId = result.store_order_id || `NEKUDA-${Date.now()}`;
+                        const itemsSummary = cartItems.map(item => `${item.quantity}x ${item.name}`).join(', ');
+
+                        setPurchaseHistory(prev => [...prev, `Order ${orderId}: ${itemsSummary} - $${total.toFixed(2)} (Nekuda SDK + Browser)`]);
+                        setCartItems([]);
+
+                        return `🎉 Purchase completed successfully using nekuda SDK + Browser Automation!\n\n✅ Order ID: ${orderId}\n👤 User: ${fixedUserId}\n💰 Total: $${total.toFixed(2)}\n📦 Items: ${itemsSummary}\n🔐 Payment: Real Nekuda SDK credentials\n🤖 Method: AI Browser Automation\n\nYour cart has been cleared.`;
+                    }
+
+                    if (statusData.status === "failed") {
+                        // Don't clear cart on failure
+                        return `❌ Purchase failed: ${statusData.error || statusData.message}. Your cart has been preserved. Please try again.`;
+                    }
                 }
+
+                return `⏱️ Purchase is taking longer than expected (over 5 minutes). Your cart has been preserved. Please try again later or contact support with purchase ID: ${purchaseId}`;
 
             } catch (error) {
                 console.error('nekuda SDK checkout error:', error);

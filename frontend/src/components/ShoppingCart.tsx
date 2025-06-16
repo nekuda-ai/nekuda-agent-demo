@@ -71,43 +71,53 @@ export function ShoppingCart() {
 
     // Calculate total (memoized to prevent unnecessary recalculations)
     const total = useMemo(() => {
-        return cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const calculatedTotal = cartItems.reduce((sum, item) => {
+            // Ensure price and quantity are valid numbers
+            const price = Number(item.price) || 0;
+            const quantity = Number(item.quantity) || 0;
+            return sum + (price * quantity);
+        }, 0);
+        // Round to 2 decimal places to prevent floating point issues
+        return Math.round(calculatedTotal * 100) / 100;
     }, [cartItems]);
 
     // Memoize cart data for Copilot to prevent infinite re-renders
-    const copilotValue = useMemo(() => ({
-        cartItems: cartItems.map(item => ({
-            id: item.id,
-            name: item.name,
-            price: item.price,
-            quantity: item.quantity,
-            subtotal: (item.price * item.quantity).toFixed(2)
-        })),
-        total: total.toFixed(2),
-        itemCount: cartItems.reduce((sum, item) => sum + item.quantity, 0),
-        availableProducts: products.map(product => ({
-            id: product.id,
-            name: product.name,
-            description: product.description,
-            category: product.category,
-            price: product.price
-        })),
-        purchaseHistory,
-        loading,
-        error
-    }), [cartItems, total, products, purchaseHistory, loading, error]);
+    const copilotValue = useMemo(() => {
+        const itemCount = cartItems.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
+        return {
+            cartItems: cartItems.map(item => ({
+                id: item.id,
+                name: item.name,
+                price: Number(item.price) || 0,
+                quantity: Number(item.quantity) || 0,
+                subtotal: ((Number(item.price) || 0) * (Number(item.quantity) || 0)).toFixed(2)
+            })),
+            total: total.toFixed(2),
+            itemCount,
+            hasItems: cartItems.length > 0,
+            // Only include essential product info to reduce payload
+            productCatalog: products.map(p => ({
+                id: p.id,
+                name: p.name,
+                price: p.price
+            })),
+            loading,
+            error: error ? error : undefined
+        };
+    }, [cartItems, total, products, loading, error]);
 
     // Make cart state readable to Copilot
     useCopilotReadable({
-        description: "Current shopping cart contents and product catalog. The cart shows EXACT quantities and prices. Do not duplicate or misinterpret the cart data.",
+        description: "Shopping cart state with calculated totals. Use this data directly without recalculating.",
         value: copilotValue,
     });
 
     // Action to view all products
     useCopilotAction({
         name: "viewProducts",
-        description: "Show all available products in the store. Triggers when user asks to: 'show me all products', 'show products', 'view products', 'list all products', 'display products', 'what products do you have', 'show me your products', 'see all products'",
+        description: "Show all available products in the store. Triggers when user asks to view products.",
         parameters: [],
+        followUp: false,
         handler: async () => {
             if (loading) {
                 return "Loading products from server...";
@@ -121,8 +131,6 @@ export function ShoppingCart() {
                 return "No products available at the moment.";
             }
 
-            // Return specific instruction to prevent AI duplication
-            return "Products are displayed below. Do not generate additional product listings.";
         },
         render: () => {
             if (loading) {
@@ -205,8 +213,6 @@ export function ShoppingCart() {
                 return `No products found matching "${query}". Try searching for: t-shirt, hoodie, hat, beanie, apparel, accessories`;
             }
 
-            // Return specific instruction to prevent AI duplication
-            return `Search results for "${query}" are displayed below. Do not generate additional product listings.`;
         },
         render: ({ args }) => {
             if (loading) {
@@ -319,8 +325,8 @@ export function ShoppingCart() {
                     return [...prev, {
                         id: product.id,
                         name: product.name,
-                        price: product.price,
-                        quantity
+                        price: Number(product.price) || 0,
+                        quantity: Number(quantity) || 1
                     }];
                 }
             });
@@ -328,7 +334,6 @@ export function ShoppingCart() {
             return `Added ${quantity}x ${product.name} to cart!`;
         },
         render: ({ status, args }: any) => {
-            // Only show product update after the action completes
             if (status === "complete" && args) {
                 const product = products.find((p: Product) => p.id === args.productId);
                 if (product) {
@@ -353,35 +358,44 @@ export function ShoppingCart() {
         name: "viewCart",
         description: "Show current shopping cart contents",
         parameters: [],
+        followUp: false,
         handler: async () => {
             if (cartItems.length === 0) {
                 return "Your cart is empty. Add some products to get started!";
             }
 
-            const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-            return `Cart updated: ${itemCount} items, total $${total.toFixed(2)}`;
+            // Return cart snapshot data to be used by render
+            return {
+                items: cartItems.map(item => {
+                    const product = products.find(p => p.id === item.id);
+                    return {
+                        ...item,
+                        image_url: product?.image_url
+                    };
+                }),
+                total: total
+            };
         },
-        render: () => {
-            // Map cart items to include image URLs from products
-            const enrichedCartItems = cartItems.map(item => {
-                const product = products.find(p => p.id === item.id);
-                return {
-                    ...item,
-                    image_url: product?.image_url
-                };
-            });
+        render: ({ result, status }) => {
+            if (status !== "complete") {
+                return <></>;
+            }
+
+            if (typeof result === 'string') {
+                return <></>;
+            }
+
+            const snapshotData = result as { items: any[], total: number };
 
             return (
                 <CartCard
-                    items={enrichedCartItems}
-                    total={total}
+                    items={snapshotData.items}
+                    total={snapshotData.total}
                     onRemoveItem={(itemId) => {
+                        // Remove functionality still works but won't update this displayed card
                         setCartItems((prev: CartItem[]) => prev.filter((item: CartItem) => item.id !== itemId));
                     }}
-                    onCheckout={() => {
-                        // This could trigger the complete purchase action
-                        console.log("Checkout triggered from CartCard");
-                    }}
+                    showCheckoutButton={false}  // Hide checkout button in chat
                 />
             );
         },
@@ -413,10 +427,8 @@ export function ShoppingCart() {
 
             setCartItems((prev: CartItem[]) => {
                 if (quantity === undefined || quantity >= existingItem.quantity) {
-                    // Remove entire item
                     return prev.filter((item: CartItem) => item.id !== productId);
                 } else {
-                    // Reduce quantity
                     return prev.map((item: CartItem) =>
                         item.id === productId
                             ? { ...item, quantity: item.quantity - quantity }
@@ -472,7 +484,7 @@ export function ShoppingCart() {
                 return (
                     <div className="flex items-center space-x-2 p-4 bg-blue-50 rounded-lg">
                         <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
-                        <span className="text-blue-700">Processing your purchase with nekuda automation...</span>
+                        <span className="text-blue-700">Processing your purchase with nekuda...</span>
                     </div>
                 );
             }
@@ -483,7 +495,6 @@ export function ShoppingCart() {
                 return "Cannot complete purchase - your cart is empty!";
             }
 
-            // Fixed userId and merchantName for nekuda integration
             const fixedUserId = "test_user_123"; // Or retrieve from actual wallet context later
             const fixedMerchantName = "nekuda Store";
 
@@ -655,8 +666,8 @@ export function ShoppingCart() {
                                 <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
                             </div>
                             <div className="text-right">
-                                <p className="font-medium text-gray-900">${(item.price * item.quantity).toFixed(2)}</p>
-                                <p className="text-sm text-gray-500">${item.price} each</p>
+                                <p className="font-medium text-gray-900">${((Number(item.price) || 0) * (Number(item.quantity) || 0)).toFixed(2)}</p>
+                                <p className="text-sm text-gray-500">${Number(item.price).toFixed(2)} each</p>
                             </div>
                         </div>
                     ))}

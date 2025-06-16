@@ -16,6 +16,7 @@ interface CartCardProps {
     onRemoveItem?: (itemId: string) => void;
     onUpdateQuantity?: (itemId: string, quantity: number) => void;
     onCheckout?: () => void;
+    showCheckoutButton?: boolean;
 }
 
 export const CartCard: React.FC<CartCardProps> = ({ 
@@ -23,7 +24,8 @@ export const CartCard: React.FC<CartCardProps> = ({
     total, 
     onRemoveItem, 
     onUpdateQuantity,
-    onCheckout 
+    onCheckout,
+    showCheckoutButton = true 
 }) => {
     const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
     const { appendMessage } = useCopilotChat();
@@ -116,15 +118,17 @@ export const CartCard: React.FC<CartCardProps> = ({
                     </div>
 
                     {/* Checkout Button */}
-                    <button
-                        onClick={handleCheckout}
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
-                    >
-                        <span>Checkout</span>
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                    </button>
+                    {showCheckoutButton && onCheckout && (
+                        <button
+                            onClick={handleCheckout}
+                            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                        >
+                            <span>Checkout</span>
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                        </button>
+                    )}
                 </>
             )}
         </div>

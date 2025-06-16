@@ -28,14 +28,14 @@ def get_llm_model(model_type="openai", is_planner=False):
             raise ValueError("OPENAI_API_KEY environment variable not set")
 
         if is_planner:
-            print("Initializing Planner LLM (OpenAI GPT-3.5 Turbo)...")
+            print("Initializing Planner LLM (OpenAI GPT-4o-mini)...")
             return ChatOpenAI(
-                model="gpt-3.5-turbo", temperature=0, max_tokens=1000, timeout=15
+                model="gpt-4o", temperature=0, max_tokens=1000, timeout=15
             )
         else:
             print("Initializing Main LLM (OpenAI GPT-4o)...")
             return ChatOpenAI(
-                model="gpt-4o", temperature=0, max_tokens=4000, timeout=30
+                model="gpt-4o-mini", temperature=0, max_tokens=4000, timeout=30
             )
     elif model_type.lower() == "anthropic":
         if not os.getenv("ANTHROPIC_API_KEY"):
@@ -85,7 +85,7 @@ async def run_order_automation(order_intent: OrderIntent):
 
     # 2. Setup LLM - Use OpenAI by default, can be changed to "anthropic"
     try:
-        model_type = "anthropic"  # Change to "openai" if needed
+        model_type = "openai"  # Change to "openai" if needed
         llm = get_llm_model(model_type)
         # planner_llm = get_llm_model(model_type, is_planner=True)
     except ValueError as e:

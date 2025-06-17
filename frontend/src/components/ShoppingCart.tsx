@@ -563,7 +563,7 @@ export function ShoppingCart() {
 
 
                 // Poll for status updates
-                const maxAttempts = 60; // 60 attempts * 5 seconds = 5 minutes max
+                const maxAttempts = 120; // 120 attempts * 5 seconds = 10 minutes max
                 let attempts = 0;
 
                 while (attempts < maxAttempts) {

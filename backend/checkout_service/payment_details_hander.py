@@ -86,6 +86,7 @@ def add_payment_details_handler_to_controller(controller: Controller):
             )
 
         mandate_data = purchase_intent.mandate_data
+        mandate_data.mode = "sandbox" # mode can be "sandbox" or "live"
 
         try:
             print(

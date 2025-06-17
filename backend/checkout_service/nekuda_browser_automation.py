@@ -85,9 +85,9 @@ async def run_order_automation(order_intent: OrderIntent):
 
     # 2. Setup LLM - Use OpenAI by default, can be changed to "anthropic"
     try:
-        model_type = "openai"  # Change to "openai" if needed
+        model_type = "anthropic"  # Change to "openai" if needed
         llm = get_llm_model(model_type)
-        # planner_llm = get_llm_model(model_type, is_planner=True)
+        planner_llm = get_llm_model(model_type, is_planner=True)
     except ValueError as e:
         print(f"ERROR: {e}")
         return
@@ -116,8 +116,8 @@ Order details:
 Steps:
 1. Add the exact items to cart (verify each product by name before clicking)
 2. Go to checkout
-3. Use Nekuda SDK actions in order: Create Purchase Intent → Get Card Reveal Token → Get Payment Details
-4. Fill checkout form with the revealed payment details, NEVER complete popup windows with email or phone verification, ALWAYS close them
+3. Must use Nekuda SDK actions in order: Create Purchase Intent → Get Card Reveal Token → Get Payment Details
+4. Fill checkout form only with the revealed payment details, NEVER complete popup windows with email or phone verification, ALWAYS close them
 5. Complete the purchase
 """
 
@@ -148,9 +148,9 @@ Steps:
 6. Extract all payment fields from response
 
 **Checkout Form:**
-- Email: test.user@example.com (ALWAYS exit OTP windows without completing it)
+- Email: from nekuda SDK response (ALWAYS exit OTP windows without completing it)
 - IMPORTANT: If popup window is detected, close it
-- IMPORTANT: Click "Enter address manually" button if present before filling address
+- IMPORTANT: Click "Enter address manually" button if address suggestion is showing
 - Use all details from SDK response (card, expiry, CVV, name, address, etc.)
 - Phone number goes at the end of form
 - Default CVV to 123 if not provided
@@ -170,6 +170,8 @@ Steps:
         task=task_prompt,
         llm=llm,
         use_vision=True,
+        planner_llm=planner_llm,
+        use_vision_for_planner=False,
         controller=controller,
         browser_session=browser_session,
         initial_actions=initial_actions,

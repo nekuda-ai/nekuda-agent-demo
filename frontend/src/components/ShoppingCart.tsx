@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useCopilotAction, useCopilotReadable, useCopilotChat } from '@copilotkit/react-core';
-import { TextMessage, Role } from '@copilotkit/runtime-client-gql';
+import { useCopilotAction, useCopilotReadable } from '@copilotkit/react-core';
 import { CartCard } from './CartCard';
 import { CartContext } from './ShoppingLayout';
 import { ProductUpdate } from './ProductUpdate';
+import { useStageShopping } from '../hooks/useStageShopping';
+import { useStageCollectPayment } from '../hooks/useStageCollectPayment';
+import { useStageCompletePurchase } from '../hooks/useStageCompletePurchase';
 
 interface Product {
     id: string;
@@ -35,8 +37,10 @@ export function ShoppingCart() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Get access to chat messages and functions
-    const { visibleMessages, appendMessage } = useCopilotChat();
+    // Use stage hooks
+    useStageShopping();
+    useStageCollectPayment();
+    useStageCompletePurchase();
 
     // Clear cart on app open/refresh
     useEffect(() => {
@@ -475,138 +479,7 @@ export function ShoppingCart() {
         },
     });
 
-    useCopilotAction({
-        name: "completePurchase",
-        description: "Complete the purchase of items in cart using nekuda SDK and browser automation.",
-        parameters: [],
-        render: ({ status }: any) => {
-            if (status === "executing") {
-                return (
-                    <div className="flex items-center space-x-2 p-4 bg-blue-50 rounded-lg">
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
-                        <span className="text-blue-700">Processing your purchase with nekuda...</span>
-                    </div>
-                );
-            }
-            return <></>;
-        },
-        handler: async () => {
-            if (cartItems.length === 0) {
-                return "Cannot complete purchase - your cart is empty!";
-            }
-
-            const fixedUserId = "test_user_123"; // Or retrieve from actual wallet context later
-            const fixedMerchantName = "nekuda Store";
-
-            try {
-                // Prepare conversation history
-                const conversationHistory = visibleMessages.map(msg => {
-                    if (msg.isTextMessage()) {
-                        return {
-                            type: 'text',
-                            role: msg.role,
-                            content: msg.content,
-                            timestamp: msg.createdAt
-                        };
-                    } else if (msg.isActionExecutionMessage()) {
-                        return {
-                            type: 'action',
-                            name: msg.name,
-                            arguments: msg.arguments,
-                            timestamp: msg.createdAt
-                        };
-                    } else if (msg.isResultMessage()) {
-                        return {
-                            type: 'result',
-                            actionName: msg.actionName,
-                            result: msg.result,
-                            timestamp: msg.createdAt
-                        };
-                    }
-                    return null;
-                }).filter(Boolean);
-
-                // Prepare order details for nekuda browser automation
-                const orderDetails = {
-                    user_id: fixedUserId,
-                    store_id: 'nekuda',
-                    items: cartItems,
-                    total: total,
-                    merchant_name: fixedMerchantName,
-                    checkout_url: 'https://nekuda-store-frontend.onrender.com/',
-                    payment_method: 'nekuda_sdk',
-                    conversation_history: conversationHistory
-                };
-
-                // Log what we're sending
-                console.log('=== SENDING TO BACKEND ===');
-                console.log('Order Details:', JSON.stringify(orderDetails, null, 2));
-                console.log('Conversation History Length:', conversationHistory.length);
-                console.log('Sample Messages:', conversationHistory.slice(0, 3));
-
-                // Call the Nekuda browser checkout service endpoint
-                const response = await fetch('http://localhost:8001/api/browser-checkout', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(orderDetails)
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    return `❌ Checkout with Nekuda SDK failed: ${errorData.detail || 'Unknown error'}. Please try again.`;
-                }
-
-                const initialResult = await response.json();
-                const purchaseId = initialResult.purchase_id;
-
-
-                // Poll for status updates
-                const maxAttempts = 120; // 120 attempts * 5 seconds = 10 minutes max
-                let attempts = 0;
-
-                while (attempts < maxAttempts) {
-                    attempts++;
-
-                    // Wait 5 seconds between polls
-                    await new Promise(resolve => setTimeout(resolve, 5000));
-
-                    // Check status
-                    const statusResponse = await fetch(`http://localhost:8001/api/purchase-status/${purchaseId}`);
-
-                    if (!statusResponse.ok) {
-                        return `❌ Error checking purchase status. Please try again.`;
-                    }
-
-                    const statusData = await statusResponse.json();
-
-
-                    if (statusData.status === "completed") {
-                        const result = statusData.result || {};
-                        const orderId = result.store_order_id || `NEKUDA-${Date.now()}`;
-                        const itemsSummary = cartItems.map(item => `${item.quantity}x ${item.name}`).join(', ');
-
-                        setPurchaseHistory(prev => [...prev, `Order ${orderId}: ${itemsSummary} - $${total.toFixed(2)} (Nekuda SDK + Browser)`]);
-                        setCartItems([]);
-
-                        return `🎉 Purchase completed successfully using nekuda SDK + Browser Automation!\n\n✅ Order ID: ${orderId}\n👤 User: ${fixedUserId}\n💰 Total: $${total.toFixed(2)}\n📦 Items: ${itemsSummary}\n🔐 Payment: Real Nekuda SDK credentials\n🤖 Method: AI Browser Automation\n\nYour cart has been cleared.`;
-                    }
-
-                    if (statusData.status === "failed") {
-                        // Don't clear cart on failure
-                        return `❌ Purchase failed: ${statusData.error || statusData.message}. Your cart has been preserved. Please try again.`;
-                    }
-                }
-
-                return `⏱️ Purchase is taking longer than expected (over 5 minutes). Your cart has been preserved. Please try again later or contact support with purchase ID: ${purchaseId}`;
-
-            } catch (error) {
-                console.error('nekuda SDK checkout error:', error);
-                return `❌ Error during nekuda SDK checkout: ${error instanceof Error ? error.message : 'Network error'}. Please ensure the checkout service is running.`;
-            }
-        },
-    });
+    // The completePurchase action is now handled by the stage hooks
 
     if (loading) {
         return (

@@ -74,7 +74,14 @@ async def process_purchase_background(purchase_id: str, order_intent: OrderInten
         }
         
     except Exception as e:
-        print(f"Browser checkout error: {e}")
+        print(f"\n❌❌❌ PURCHASE FAILED ❌❌❌")
+        print(f"Purchase ID: {purchase_id}")
+        print(f"Error Type: {type(e).__name__}")
+        print(f"Error Message: {str(e)}")
+        print(f"User ID: {order_intent.user_id}")
+        print(f"Total Amount: ${request.total}")
+        print("❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌\n")
+        
         purchase_status[purchase_id]["status"] = "failed"
         purchase_status[purchase_id]["message"] = f"Checkout failed: {str(e)}"
         purchase_status[purchase_id]["error"] = str(e)

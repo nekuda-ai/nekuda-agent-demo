@@ -5,6 +5,7 @@ import './CopilotChatContainer.css';
 import { ShoppingCart } from './ShoppingCart';
 import { WalletWidget } from './WalletWidget';
 import { CartSidebar } from './CartSidebar';
+import { GlobalStateProvider, useGlobalState } from '../hooks/useGlobalState';
 
 // Create a context for cart state to share between components
 interface CartItem {
@@ -31,7 +32,8 @@ export const useCart = () => {
     return context;
 };
 
-export const ShoppingLayout: React.FC = () => {
+const ShoppingLayoutContent: React.FC = () => {
+    const { stage } = useGlobalState();
     const [isWalletOpen, setIsWalletOpen] = useState(false);
     const [cartItems, setCartItems] = useState<CartItem[]>([]);
     const [showCartSidebar, setShowCartSidebar] = useState(false);
@@ -160,15 +162,24 @@ export const ShoppingLayout: React.FC = () => {
                             console.log("Checkout triggered from sidebar");
                         }}
                         isVisible={showCartSidebar}
+                        onClose={() => setShowCartSidebar(false)}
                     />
                 </div>
 
-                {/* Wallet Widget Modal */}
-                <WalletWidget
-                    isOpen={isWalletOpen}
-                    onClose={() => setIsWalletOpen(false)}
-                />
-            </>
-        </CartContext.Provider>
+                    {/* Wallet Widget Modal */}
+                    <WalletWidget
+                        isOpen={isWalletOpen}
+                        onClose={() => setIsWalletOpen(false)}
+                    />
+                </>
+            </CartContext.Provider>
+    );
+};
+
+export const ShoppingLayout: React.FC = () => {
+    return (
+        <GlobalStateProvider>
+            <ShoppingLayoutContent />
+        </GlobalStateProvider>
     );
 };

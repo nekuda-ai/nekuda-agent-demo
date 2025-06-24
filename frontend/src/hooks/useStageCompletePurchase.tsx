@@ -1,5 +1,4 @@
 import { useCopilotAction, useCopilotAdditionalInstructions, useCopilotChat } from '@copilotkit/react-core';
-import { TextMessage, Role } from '@copilotkit/runtime-client-gql';
 import { useGlobalState } from './useGlobalState';
 import { getWalletToken, clearWalletToken } from '../utils/walletState';
 import { classifyError, getErrorMessage, formatErrorForHistory } from '../utils/errorHandlers';
@@ -8,7 +7,7 @@ import { useCart } from '../components/ShoppingLayout';
 export function useStageCompletePurchase() {
   const { stage, setStage, paymentToken, setPaymentToken, setLastPurchaseResult, setLastError } = useGlobalState();
   const { cartItems, setCartItems, total } = useCart();
-  const { visibleMessages, appendMessage } = useCopilotChat();
+  const { visibleMessages } = useCopilotChat();
 
   // Provide instructions to the AI when in this stage
   useCopilotAdditionalInstructions(
@@ -55,32 +54,41 @@ export function useStageCompletePurchase() {
         const fixedMerchantName = "nekuda Store";
 
         try {
-          // Prepare conversation history
-          const conversationHistory = visibleMessages.map(msg => {
-            if (msg.isTextMessage()) {
-              return {
-                type: 'text',
-                role: msg.role,
-                content: msg.content,
-                timestamp: msg.createdAt
-              };
-            } else if (msg.isActionExecutionMessage()) {
-              return {
-                type: 'action',
-                name: msg.name,
-                arguments: msg.arguments,
-                timestamp: msg.createdAt
-              };
-            } else if (msg.isResultMessage()) {
-              return {
-                type: 'result',
-                actionName: msg.actionName,
-                result: msg.result,
-                timestamp: msg.createdAt
-              };
-            }
-            return null;
-          }).filter(Boolean);
+          // Extract human messages (only user text messages)
+          const humanMessages = visibleMessages
+            .filter(msg => msg.isTextMessage() && msg.role === 'user')
+            .map(msg => msg.content);
+
+          // Build conversation context for mandate
+          const conversationContext = {
+            intent: "purchase",
+            session_id: `session_${Date.now()}`,
+            messages: visibleMessages.map(msg => {
+              if (msg.isTextMessage()) {
+                return {
+                  type: 'text',
+                  role: msg.role,
+                  content: msg.content,
+                  timestamp: msg.createdAt
+                };
+              } else if (msg.isActionExecutionMessage()) {
+                return {
+                  type: 'action',
+                  name: msg.name,
+                  arguments: msg.arguments,
+                  timestamp: msg.createdAt
+                };
+              } else if (msg.isResultMessage()) {
+                return {
+                  type: 'result',
+                  actionName: msg.actionName,
+                  result: msg.result,
+                  timestamp: msg.createdAt
+                };
+              }
+              return null;
+            }).filter(Boolean)
+          };
 
           // Prepare order details
           const orderDetails = {
@@ -92,7 +100,8 @@ export function useStageCompletePurchase() {
             checkout_url: 'https://nekuda-store-frontend.onrender.com/',
             payment_method: 'nekuda_sdk',
             payment_card_token: token,
-            conversation_history: conversationHistory
+            conversation_context: conversationContext,
+            human_messages: humanMessages
           };
 
           console.log('=== SENDING TO BACKEND ===');
@@ -115,11 +124,8 @@ export function useStageCompletePurchase() {
           const initialResult = await response.json();
           const purchaseId = initialResult.purchase_id;
 
-          // Show initial status
-          appendMessage(new TextMessage({
-            content: `🔄 Purchase initiated with ID: ${purchaseId}. Monitoring status...`,
-            role: Role.ASSISTANT
-          }));
+          // Collect status updates to return at the end
+          const statusUpdates = [`🔄 Purchase initiated with ID: ${purchaseId}`];
 
           // Poll for status updates
           const maxAttempts = 120;
@@ -138,13 +144,10 @@ export function useStageCompletePurchase() {
 
             const statusData = await statusResponse.json();
 
-            // Update user on status changes
+            // Collect status changes
             if (statusData.message && statusData.message !== lastStatus) {
               lastStatus = statusData.message;
-              appendMessage(new TextMessage({
-                content: `📍 Status update: ${statusData.message}`,
-                role: Role.ASSISTANT
-              }));
+              statusUpdates.push(`📍 ${statusData.message}`);
             }
 
             if (statusData.status === "completed") {
@@ -161,14 +164,18 @@ export function useStageCompletePurchase() {
               setLastPurchaseResult(result);
               setStage("shopping");
 
-              return `🎉 Purchase completed successfully!\n\n✅ Order ID: ${orderId}\n👤 User: ${fixedUserId}\n💰 Total: $${total.toFixed(2)}\n📦 Items: ${itemsSummary}\n\nYour cart has been cleared. You can continue shopping!`;
+              // Include all status updates in the return message
+              const statusHistory = statusUpdates.length > 1 ? statusUpdates.join('\n') + '\n\n' : '';
+              return `${statusHistory}🎉 Purchase completed successfully!\n\n✅ Order ID: ${orderId}\n👤 User: ${fixedUserId}\n💰 Total: $${total.toFixed(2)}\n📦 Items: ${itemsSummary}\n\nYour cart has been cleared. You can continue shopping!`;
             }
 
             if (statusData.status === "failed") {
               const error = classifyError(statusData);
               setLastError(error);
               setStage("shopping");
-              return getErrorMessage(error);
+              // Include status updates before the error message
+              const statusHistory = statusUpdates.length > 0 ? statusUpdates.join('\n') + '\n\n' : '';
+              return statusHistory + getErrorMessage(error);
             }
           }
 

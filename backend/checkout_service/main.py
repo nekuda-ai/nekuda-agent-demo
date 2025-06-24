@@ -1,6 +1,7 @@
 # Placeholder for backend/checkout_service/main.py
 import uvicorn
 import uuid
+import json
 from typing import Dict, Optional
 from datetime import datetime
 from fastapi import FastAPI, HTTPException, BackgroundTasks
@@ -10,6 +11,7 @@ import asyncio
 
 from nekuda_browser_automation import run_order_automation
 from models import OrderIntent, OrderItem, BrowserCheckoutRequest
+from payment_details_handler_simplified import store_purchase_intent
 
 app = FastAPI(title="Checkout Service")
 
@@ -106,14 +108,18 @@ async def browser_checkout(request: BrowserCheckoutRequest, background_tasks: Ba
     }
     
     print(f"Starting nekuda browser checkout for user: {request.user_id} with purchase_id: {purchase_id}")
+    print(f"Request data: items={len(request.items)}, total=${request.total}, merchant={request.merchant_name}")
     
-    # Log conversation history if provided
-    if request.conversation_history:
-        print(f"Conversation history received with {len(request.conversation_history)} messages")
-        for i, msg in enumerate(request.conversation_history[-5:]):  # Last 5 messages
-            print(f"Message {i+1}: Type={msg.get('type')}, Role={msg.get('role', 'N/A')}")
-            if msg.get('type') == 'text':
-                print(f"  Content: {msg.get('content', '')[:100]}...")  # First 100 chars
+    # Log conversation context if provided
+    if request.conversation_context:
+        print(f"Conversation context received: intent={request.conversation_context.get('intent')}")
+        if 'messages' in request.conversation_context:
+            print(f"  Total messages: {len(request.conversation_context['messages'])}")
+    
+    if request.human_messages:
+        print(f"Human messages received: {len(request.human_messages)} messages")
+        for i, msg in enumerate(request.human_messages[:3]):  # First 3 messages
+            print(f"  Human message {i+1}: {msg[:50]}...")  # First 50 chars
 
     # Prepare order details for nekuda browser automation
     order_intent = OrderIntent(
@@ -123,7 +129,7 @@ async def browser_checkout(request: BrowserCheckoutRequest, background_tasks: Ba
         merchant_name=request.merchant_name,
         order_items=[
             OrderItem(
-                item_id=item["id"],
+                item_id=item.get("id"),
                 name=item["name"],
                 quantity=item["quantity"],
                 price=item["price"],
@@ -132,9 +138,34 @@ async def browser_checkout(request: BrowserCheckoutRequest, background_tasks: Ba
         ],
     )
     
-    # Store conversation history in order_intent
-    if request.conversation_history:
-        order_intent.conversation_history = request.conversation_history
+    # Store conversation context in order_intent (for browser automation)
+    if request.conversation_context and 'messages' in request.conversation_context:
+        order_intent.conversation_history = request.conversation_context['messages']
+    
+    # Build a simple product description from items
+    product_names = [item['name'] for item in request.items]
+    product_desc = ', '.join(product_names) if product_names else 'Purchase'
+    
+    # Store purchase intent in memory for the payment handler
+    store_purchase_intent({
+        'user_id': request.user_id,
+        'mandate_data': {
+            'product': product_desc,
+            'product_description': f"{len(request.items)} items from {request.merchant_name}",
+            'price': request.total,
+            'currency': 'USD',
+            'merchant': request.merchant_name,
+            'merchant_link': request.checkout_url,
+            'conversation_context': request.conversation_context or {},
+            'human_messages': request.human_messages or [],
+            'additional_details': {
+                'store_id': request.store_id,
+                'items': request.items
+            },
+            'confidence_score': 0.9,
+            'mode': 'sandbox'
+        }
+    })
 
     # Add the purchase processing to background tasks
     background_tasks.add_task(

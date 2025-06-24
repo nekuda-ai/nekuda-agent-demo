@@ -1,12 +1,14 @@
 import traceback
 import os
+import asyncio
 from datetime import datetime
 from dotenv import load_dotenv
 from browser_use import Agent, Controller, BrowserSession
 from langchain_openai import ChatOpenAI
 from langchain_anthropic import ChatAnthropic
-from payment_details_hander import (
-    add_payment_details_handler_to_controller,
+from langchain_google_genai import ChatGoogleGenerativeAI
+from payment_details_handler_simplified import (
+    add_simplified_payment_handler,
 )
 from models import OrderIntent
 
@@ -35,7 +37,7 @@ def get_llm_model(model_type="openai", is_planner=False):
         else:
             print("Initializing Main LLM (OpenAI GPT-4o)...")
             return ChatOpenAI(
-                model="gpt-4o-mini", temperature=0, max_tokens=4000, timeout=30
+                model="gpt-4o-2024-08-06", temperature=0, max_tokens=4000, timeout=30
             )
     elif model_type.lower() == "anthropic":
         if not os.getenv("ANTHROPIC_API_KEY"):
@@ -47,6 +49,24 @@ def get_llm_model(model_type="openai", is_planner=False):
         else:
             print("Initializing Main LLM (Claude 3.5 Haiku)...")
             return ChatAnthropic(model="claude-3-5-haiku-20241022")
+    elif model_type.lower() == "gemini":
+        if not os.getenv("GOOGLE_API_KEY"):
+            raise ValueError("GOOGLE_API_KEY environment variable not set")
+
+        print("Configuring Gemini 2.5 Flash for browser-use compatibility...")
+
+        if is_planner:
+            print("Initializing Planner LLM (Gemini 2.5 Flash)...")
+            return ChatGoogleGenerativeAI(
+                model="gemini-2.5-flash",
+                temperature=0,
+            )
+        else:
+            print("Initializing Main LLM (Gemini 2.5 Flash)...")
+            return ChatGoogleGenerativeAI(
+                model="gemini-2.5-flash",
+                temperature=0,
+            )
     else:
         raise ValueError(f"Unsupported model type: {model_type}")
 
@@ -67,8 +87,8 @@ async def run_order_automation(order_intent: OrderIntent):
     print(f"Using NEKUDA_BASE_URL: {nekuda_base_url}")
 
     controller = Controller()
-    print("Adding payment details handler to controller...")
-    add_payment_details_handler_to_controller(controller)
+    print("Adding simplified payment details handler to controller...")
+    add_simplified_payment_handler(controller)
 
     # Create browser session with optimized timing settings and larger viewport
     browser_session = BrowserSession(
@@ -85,7 +105,7 @@ async def run_order_automation(order_intent: OrderIntent):
 
     # 2. Setup LLM - Use OpenAI by default, can be changed to "anthropic"
     try:
-        model_type = "anthropic"  # Change to "openai" if needed
+        model_type = "openai"  # Change to "openai" if needed
         llm = get_llm_model(model_type)
         planner_llm = get_llm_model(model_type, is_planner=True)
     except ValueError as e:
@@ -105,63 +125,27 @@ async def run_order_automation(order_intent: OrderIntent):
     items_summary = ", ".join(items_list)
 
     # Concise task message
-    task_prompt = f"""Complete a purchase on the Nekuda store using the Nekuda SDK for payment.
-
-Order details:
-- Items: {items_summary}
-- Total: ${total_price}
-- User ID: {order_intent.user_id}
-- purchase intent: {order_intent}
+    task_prompt = f"""Purchase {items_summary} for ${total_price} using Nekuda payment.
 
 Steps:
-1. Add the exact items to cart (verify each product by name before clicking)
-2. Go to checkout
-3. Must use Nekuda SDK actions in order: Create Purchase Intent → Get Card Reveal Token → Get Payment Details
-4. Fill checkout form only with the revealed payment details, NEVER complete popup windows with email or phone verification, ALWAYS close them
-5. Complete the purchase
+1. Add items to cart (match by name)
+2. Go to checkout and validate you see the checkout form
+3. Use "Get Nekuda Payment Details" action with actual product name and total price
+4. Fill form with payment details you got from the "Get Nekuda Payment Details" action (close any popups)
+5. Complete purchase
 """
 
     # Detailed context for the agent
-    message_context = """Important Guidelines:
-
-**Cart Management:**
-- Identify products by their text/name, NOT by button index
-- Verify correct items, and quantities are in cart before checkout
-- For multiple quantities, click Add to Cart multiple times
-
-**Nekuda SDK Flow:**
-1. Create Purchase Intent filling the purchase intent with the following details:
-- user_id: {order_intent.user_id}
-- product: {order_intent.product}
-- product_description: {order_intent.product_description}
-- price: {order_intent.price}
-- currency: {order_intent.currency}
-- merchant: {order_intent.merchant}
-- conversation_context: {order_intent.conversation_history}
-- human_messages: {order_intent.human_messages}
-- additional_details: {order_intent.additional_details}
-
-2. Extract Mandate ID from response
-3. Get Card Reveal Token using the Mandate ID (id should be digits only)
-4. Extract Reveal Token from response
-5. Get Payment Details using the Reveal Token
-6. Extract all payment fields from response
-
-**Checkout Form:**
-- Email: from nekuda SDK response (ALWAYS exit OTP windows without completing it)
-- IMPORTANT: If popup window is detected, close it
-- IMPORTANT: Click "Enter address manually" button if address suggestion is showing
-- Use all details from SDK response (card, expiry, CVV, name, address, etc.)
-- Phone number goes at the end of form
-- Default CVV to 123 if not provided
-- Billing address should be the same as shipping address (keep the checkbox the same)
-
-**Error Handling:**
-- Max 2 retries per action
-- Max 3 retries for final Pay button
-- Close/bypass any popups
-- Don't toggle checkboxes
-- ALWAYS close popup windows including email and phone verification
+    message_context = f"""Key Points:
+- Match products by name exactly
+- At checkout, call "Get Nekuda Payment Details" with:
+  * product: exact product name from page
+  * price: total price shown
+  * confidence_score: 0.0-1.0 (how sure you are)
+- Use ALL payment details from action response
+- Close any popups (email/phone verification)
+- Click "Enter address manually" if needed
+- User ID: {order_intent.user_id}
 """
 
     # 5. Initialize and Run the Agent
@@ -172,6 +156,7 @@ Steps:
         use_vision=True,
         planner_llm=planner_llm,
         use_vision_for_planner=False,
+        planner_interval=4,
         controller=controller,
         browser_session=browser_session,
         initial_actions=initial_actions,
@@ -182,7 +167,11 @@ Steps:
 
     print("\nStarting agent run...")
     try:
-        result = await agent.run(max_steps=20)
+        # Add timeout and better error handling
+        result = await asyncio.wait_for(
+            agent.run(max_steps=20),
+            timeout=600  # 10 minutes timeout
+        )
         print("\nAgent run completed.")
         print("Final Result:", result.final_result())
 
@@ -201,7 +190,7 @@ Steps:
         print(f"Final URL visited: {result.urls()[-1] if result.urls() else 'N/A'}")
 
     except Exception as e:
-        print(f"\n--- An Top-Level Exception Occurred ---")
+        print("\n--- An Top-Level Exception Occurred ---")
         print(f"Error: {e}")
         traceback.print_exc()
 

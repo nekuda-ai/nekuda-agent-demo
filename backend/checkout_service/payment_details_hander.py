@@ -20,10 +20,9 @@ from typing import Dict, List, Any, Optional
 from pydantic import BaseModel
 from browser_use import Controller, ActionResult
 from nekuda import (
-    MandateData,
     NekudaClient,
 )
-from models import PurchaseIntent
+from models import PurchaseIntent, FlexibleMandateData
 
 logger = logging.getLogger(__name__)
 
@@ -85,8 +84,15 @@ def add_payment_details_handler_to_controller(controller: Controller):
                 error="nekudaClient not initialized.",
             )
 
+        # Log the received data for debugging
+        logger.info(f"Received purchase_intent: {purchase_intent}")
+        logger.info(f"Mandate data type: {type(purchase_intent.mandate_data)}")
+        
         mandate_data = purchase_intent.mandate_data
         mandate_data.mode = "sandbox" # mode can be "sandbox" or "live"
+        
+        # Log the processed mandate data
+        logger.info(f"Processed mandate_data: {mandate_data}")
 
         try:
             print(

@@ -1,7 +1,8 @@
 import uuid
+import json
 from datetime import datetime
-from typing import Any, Dict, List, Optional
-from pydantic import BaseModel, Field
+from typing import Any, Dict, List, Optional, Union
+from pydantic import BaseModel, Field, field_validator
 from nekuda import MandateData
 
 
@@ -14,7 +15,11 @@ class BrowserCheckoutRequest(BaseModel):
     total: float
     merchant_name: str = "nekuda Store"
     checkout_url: str
-    conversation_history: Optional[List[Dict[str, Any]]] = None
+    payment_method: Optional[str] = None
+    payment_card_token: Optional[str] = None
+    conversation_context: Optional[Dict[str, Any]] = None
+    human_messages: Optional[List[str]] = None
+    conversation_history: Optional[List[Dict[str, Any]]] = None  # For backward compatibility
 
 
 class OrderItem(BaseModel):
@@ -57,10 +62,49 @@ class PaymentSummary(BaseModel):
     estimated_delivery_fee: float = 0.0
     estimated_total: float  # To be calculated: subtotal + tax + delivery_fee
 
+class FlexibleMandateData(MandateData):
+    """Extended MandateData that can handle string JSON inputs."""
+
+    @field_validator('conversation_context', mode='before')
+    @classmethod
+    def parse_conversation_context(cls, v):
+        if isinstance(v, str):
+            try:
+                # First try to parse as JSON
+                return json.loads(v)
+            except json.JSONDecodeError:
+                # If it's not valid JSON, wrap it in a dictionary
+                # This handles cases like 'add 2 shirts' -> {'message': 'add 2 shirts'}
+                return {'message': v}
+        return v
+
+    @field_validator('additional_details', mode='before')
+    @classmethod
+    def parse_additional_details(cls, v):
+        if isinstance(v, str):
+            try:
+                # First try to parse as JSON
+                return json.loads(v)
+            except json.JSONDecodeError:
+                # If it's not valid JSON, wrap it in a dictionary
+                return {'details': v}
+        return v
+    
+    @field_validator('human_messages', mode='before')
+    @classmethod
+    def parse_human_messages(cls, v):
+        if isinstance(v, str):
+            # If it's a string, wrap it in a list
+            return [v]
+        elif v is None:
+            return []
+        return v
+
+
 class PurchaseIntent(BaseModel):
     """Purchase intent model with User ID and MandateData."""
     user_id: str
-    mandate_data: MandateData = Field(
+    mandate_data: Union[FlexibleMandateData, Dict[str, Any]] = Field(
         description="""The mandate data for the purchase intent. Contains the following fields:
 
         Product Information:
@@ -73,9 +117,9 @@ class PurchaseIntent(BaseModel):
 
         Contextual/Conversational Metadata:
         - confidence_score: Optional[float] = None - AI confidence in the mandate extraction
-        - conversation_context: Optional[Mapping[str, Any]] = None - Context from conversation
+        - conversation_context: Optional[Mapping[str, Any]] = None - Context from conversation (can be JSON string)
         - human_messages: Optional[List[str]] = None - Relevant human messages
-        - additional_details: Optional[Mapping[str, Any]] = None - Any additional contextual data
+        - additional_details: Optional[Mapping[str, Any]] = None - Any additional contextual data (can be JSON string)
 
         Internal Fields:
         - request_id: str - Unique idempotency key (automatically generated)"""

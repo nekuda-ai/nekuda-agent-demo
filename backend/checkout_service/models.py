@@ -1,3 +1,9 @@
+"""Data models for the Nekuda SDK checkout service demo.
+
+This module contains Pydantic models used for request/response validation
+and data transfer between the frontend, backend, and browser automation.
+"""
+
 import uuid
 import json
 from datetime import datetime
@@ -7,7 +13,11 @@ from nekuda import MandateData
 
 
 class BrowserCheckoutRequest(BaseModel):
-    """Request for the browser checkout."""
+    """Request model for initiating browser-based checkout automation.
+    
+    This model represents the data sent from the frontend to start a
+    checkout process using browser automation with Nekuda SDK payment.
+    """
 
     user_id: str
     store_id: str
@@ -17,23 +27,31 @@ class BrowserCheckoutRequest(BaseModel):
     checkout_url: str
     payment_method: Optional[str] = None
     payment_card_token: Optional[str] = None
-    conversation_context: Optional[Dict[str, Any]] = None
-    human_messages: Optional[List[str]] = None
-    conversation_history: Optional[List[Dict[str, Any]]] = None  # For backward compatibility
+    conversation_context: Optional[Dict[str, Any]] = None  # Full conversation context with intent, session_id, messages
+    human_messages: Optional[List[str]] = None  # User messages only, extracted from conversation
+    conversation_history: Optional[List[Dict[str, Any]]] = None  # Deprecated, for backward compatibility
 
 
 class OrderItem(BaseModel):
-    """Order item model."""
+    """Represents a single item in an order.
+    
+    Attributes:
+        item_id: Optional unique identifier for the item
+        name: Display name of the item
+        quantity: Number of units ordered
+        price: Price per unit
+        customizations: Optional list of item customizations
+    """
 
     item_id: Optional[str] = None
     name: str
     quantity: int
     price: float
-    customizations: Optional[List[Dict[str, Any]]] = None  # Placeholder
+    customizations: Optional[List[Dict[str, Any]]] = None
 
 
 class DeliveryAddress(BaseModel):
-    """Delivery address model."""
+    """Physical address for order delivery."""
 
     street_address: str
     city: str
@@ -43,11 +61,17 @@ class DeliveryAddress(BaseModel):
 
 
 class DeliveryDetails(BaseModel):
-    """Delivery details model."""
+    """Complete delivery information for an order.
+    
+    Attributes:
+        delivery_time_requested: Requested delivery time ("ASAP" or ISO format)
+        delivery_address: Physical delivery location
+        contact_name: Name of the recipient
+        contact_phone: Contact phone number
+        delivery_instructions: Optional special instructions
+    """
 
-    delivery_time_requested: (
-        str  # Initially string (e.g., "ASAP", "2025-06-15T18:30:00Z")
-    )
+    delivery_time_requested: str
     delivery_address: DeliveryAddress
     contact_name: str
     contact_phone: str
@@ -55,15 +79,27 @@ class DeliveryDetails(BaseModel):
 
 
 class PaymentSummary(BaseModel):
-    """Payment summary model."""
+    """Financial breakdown of an order.
+    
+    Attributes:
+        subtotal: Sum of all item prices
+        estimated_tax: Calculated tax amount
+        estimated_delivery_fee: Delivery charge
+        estimated_total: Sum of subtotal, tax, and delivery fee
+    """
 
     subtotal: float
     estimated_tax: float = 0.0
     estimated_delivery_fee: float = 0.0
-    estimated_total: float  # To be calculated: subtotal + tax + delivery_fee
+    estimated_total: float
 
 class FlexibleMandateData(MandateData):
-    """Extended MandateData that can handle string JSON inputs."""
+    """Extended MandateData with flexible parsing for frontend inputs.
+    
+    This class extends Nekuda's MandateData to handle various input formats
+    that might come from the frontend, including JSON strings that need
+    to be parsed into proper dictionaries.
+    """
 
     @field_validator('conversation_context', mode='before')
     @classmethod
@@ -127,7 +163,27 @@ class PurchaseIntent(BaseModel):
 
 
 class OrderIntent(BaseModel):
-    """Represents the user's intention to order, accumulating items."""
+    """Represents a user's complete order intent for browser automation.
+    
+    This model accumulates all necessary information for the browser
+    automation agent to complete a purchase, including items, merchant
+    details, and conversation context.
+    
+    Attributes:
+        intent_id: Unique identifier for this order intent
+        user_id: Nekuda user identifier
+        session_id: Optional session tracking ID
+        store_id: Merchant's store identifier
+        checkout_url: URL where checkout should be performed
+        merchant_name: Display name of the merchant
+        delivery_instructions: Optional special delivery notes
+        order_items: List of items to purchase
+        payment_summary: Calculated payment breakdown
+        conversation_history: Optional conversation context
+        created_at: Timestamp when intent was created
+        updated_at: Timestamp of last update
+        last_updated: Deprecated, use updated_at
+    """
 
     intent_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     user_id: str
@@ -145,19 +201,24 @@ class OrderIntent(BaseModel):
     last_updated: datetime = Field(default_factory=datetime.now)
 
     def touch(self):
+        """Update the timestamp to reflect recent changes."""
         self.updated_at = datetime.utcnow()
 
     def calculate_summary(self):
+        """Calculate the payment summary based on current items.
+        
+        Note: Tax and delivery fee calculation is simplified for this demo.
+        In production, these would be calculated based on location, merchant
+        rules, and other factors.
+        """
         if not self.order_items:
             self.payment_summary = None
             self.touch()
             return
 
         subtotal = sum(item.quantity * item.price for item in self.order_items)
-        # Placeholder for tax and delivery fee logic for now
-        # These could be fetched based on restaurant_id or other configurations later
-        tax = 0.0
-        delivery_fee = 0.0
+        tax = 0.0  # Simplified for demo
+        delivery_fee = 0.0  # Simplified for demo
 
         self.payment_summary = PaymentSummary(
             subtotal=subtotal,
@@ -168,5 +229,6 @@ class OrderIntent(BaseModel):
         self.touch()
 
     def update_status(self, new_status: str):
+        """Update the order status and timestamp."""
         self.status = new_status
         self.touch()

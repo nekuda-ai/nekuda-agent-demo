@@ -1,4 +1,4 @@
-# Placeholder for backend/checkout_service/main.py
+"""Checkout Service API for Nekuda SDK browser automation demo."""
 import uvicorn
 import uuid
 import json
@@ -11,7 +11,7 @@ import asyncio
 
 from nekuda_browser_automation import run_order_automation
 from models import OrderIntent, OrderItem, BrowserCheckoutRequest
-from payment_details_handler_simplified import store_purchase_intent
+from payment_details_handler import store_purchase_intent
 
 app = FastAPI(title="Checkout Service")
 
@@ -76,13 +76,9 @@ async def process_purchase_background(purchase_id: str, order_intent: OrderInten
         }
         
     except Exception as e:
-        print(f"\n❌❌❌ PURCHASE FAILED ❌❌❌")
-        print(f"Purchase ID: {purchase_id}")
-        print(f"Error Type: {type(e).__name__}")
-        print(f"Error Message: {str(e)}")
-        print(f"User ID: {order_intent.user_id}")
-        print(f"Total Amount: ${request.total}")
-        print("❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌\n")
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Purchase failed - ID: {purchase_id}, User: {order_intent.user_id}, Amount: ${request.total}, Error: {str(e)}")
         
         purchase_status[purchase_id]["status"] = "failed"
         purchase_status[purchase_id]["message"] = f"Checkout failed: {str(e)}"
@@ -107,19 +103,10 @@ async def browser_checkout(request: BrowserCheckoutRequest, background_tasks: Ba
         "error": None
     }
     
-    print(f"Starting nekuda browser checkout for user: {request.user_id} with purchase_id: {purchase_id}")
-    print(f"Request data: items={len(request.items)}, total=${request.total}, merchant={request.merchant_name}")
-    
-    # Log conversation context if provided
-    if request.conversation_context:
-        print(f"Conversation context received: intent={request.conversation_context.get('intent')}")
-        if 'messages' in request.conversation_context:
-            print(f"  Total messages: {len(request.conversation_context['messages'])}")
-    
-    if request.human_messages:
-        print(f"Human messages received: {len(request.human_messages)} messages")
-        for i, msg in enumerate(request.human_messages[:3]):  # First 3 messages
-            print(f"  Human message {i+1}: {msg[:50]}...")  # First 50 chars
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.info(f"Starting nekuda browser checkout for user: {request.user_id} with purchase_id: {purchase_id}")
+    logger.debug(f"Request data: items={len(request.items)}, total=${request.total}, merchant={request.merchant_name}")
 
     # Prepare order details for nekuda browser automation
     order_intent = OrderIntent(
@@ -196,5 +183,8 @@ async def get_purchase_status(purchase_id: str):
 
 
 if __name__ == "__main__":
-    print("Starting Checkout Service...")
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+    logger.info("Starting Checkout Service...")
     uvicorn.run("main:app", host="0.0.0.0", port=8001, reload=True)

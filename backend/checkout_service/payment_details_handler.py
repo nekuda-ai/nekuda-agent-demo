@@ -1,13 +1,10 @@
 """
-Simplified payment details handler for browser-use controller.
+Payment details handler for browser-use controller.
 
-Provides a single action that combines all Nekuda SDK operations:
-1. Updates mandate data with runtime information (product, price, confidence)
-2. Creates purchase intent and gets mandate ID
-3. Gets card reveal token
-4. Gets actual payment details
-
-All in one atomic operation.
+Provides a single unified action that handles all Nekuda SDK operations
+for browser automation workflows. This handler stores purchase intent
+from the frontend and updates it with runtime information from the
+browser agent before processing payment details.
 """
 
 import logging
@@ -39,7 +36,11 @@ def store_purchase_intent(purchase_intent_data: dict):
 
 
 def get_nekuda_client():
-    """Get the NekudaClient."""
+    """Initialize and return the NekudaClient instance.
+    
+    Returns:
+        NekudaClient: Configured client instance or None if initialization fails.
+    """
     try:
         client = NekudaClient.from_env()
         logger.info(f"NekudaClient initialized. Using Base URL: {client.base_url}")
@@ -49,8 +50,8 @@ def get_nekuda_client():
         return None
 
 
-def add_simplified_payment_handler(controller: Controller):
-    """Register simplified payment action with controller."""
+def add_payment_handler(controller: Controller):
+    """Register payment action with controller."""
     nekuda_client = get_nekuda_client()
 
     @controller.action("Get Nekuda Payment Details", param_model=RuntimeMandateUpdate)
@@ -82,7 +83,7 @@ def add_simplified_payment_handler(controller: Controller):
             mandate_data = MandateData(**mandate_dict)
 
             user_id = stored_purchase_intent['user_id']
-            logger.info(f"Processing payment for user {user_id}, product: {update.product}, price: ${update.price}")
+            logger.debug(f"Processing payment for user {user_id}, product: {update.product}, price: ${update.price}")
 
             # 2. Create mandate
             user_api = nekuda_client.user(user_id)
@@ -92,7 +93,7 @@ def add_simplified_payment_handler(controller: Controller):
             if not mandate_id:
                 raise Exception("No mandate_id returned")
 
-            logger.info(f"Created mandate: {mandate_id}")
+            logger.debug(f"Created mandate: {mandate_id}")
 
             # 3. Get card reveal token
             token_data = user_api.request_card_reveal_token(mandate_id)
@@ -101,7 +102,7 @@ def add_simplified_payment_handler(controller: Controller):
             if not reveal_token:
                 raise Exception("No reveal_token returned")
 
-            logger.info(f"Got reveal token: {reveal_token[:10]}...")
+            logger.debug(f"Got reveal token: {reveal_token[:10]}...")
 
             # 4. Get payment details
             card_details = user_api.reveal_card_details(reveal_token)
@@ -127,7 +128,7 @@ def add_simplified_payment_handler(controller: Controller):
                 f"Zip: {card_details.zip_code}"
             )
 
-            logger.info("Successfully retrieved all payment details")
+            logger.debug("Successfully retrieved all payment details")
             return ActionResult(
                 extracted_content=payment_info,
                 include_in_memory=True
@@ -141,4 +142,4 @@ def add_simplified_payment_handler(controller: Controller):
                 error=error_msg
             )
 
-    print("✅ Registered simplified action: Get Nekuda Payment Details")
+    logger.info("Registered action: Get Nekuda Payment Details")

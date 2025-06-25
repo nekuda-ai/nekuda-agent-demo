@@ -27,7 +27,7 @@ jobs:
           # Install all dependencies
           uv pip install -r backend/store_api/requirements.txt -r backend/checkout_service/requirements.txt ruff
           # Run ruff check
-          uv run ruff check backend/ --fix=false
+          uv run ruff check backend/
 
   frontend-check:
     name: Frontend Check

@@ -6,9 +6,6 @@ on:
   pull_request:
     branches: [ main ]
 
-env:
-  UV_SYSTEM_PYTHON: 1
-
 jobs:
   python-check:
     name: Python Check
@@ -23,17 +20,14 @@ jobs:
           cache-dependency-glob: |
             **/requirements.txt
       
-      - name: Set up Python
-        run: uv python install
-      
-      - name: Install Python dependencies
+      - name: Install dependencies and check Python syntax
         run: |
-          uv pip install -r backend/store_api/requirements.txt
-          uv pip install -r backend/checkout_service/requirements.txt
-          uv pip install ruff
-      
-      - name: Check Python syntax
-        run: ruff check backend/ --fix=false
+          # Create a virtual environment
+          uv venv
+          # Install all dependencies
+          uv pip install -r backend/store_api/requirements.txt -r backend/checkout_service/requirements.txt ruff
+          # Run ruff check
+          uv run ruff check backend/ --fix=false
 
   frontend-check:
     name: Frontend Check

@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: nekuda Documentation
+    url: https://docs.nekuda.ai
+    about: Check the nekuda SDK documentation for API references and guides
+  - name: Email Support
+    url: mailto:founders@nekuda.ai
+    about: Contact us directly for business inquiries or partnership opportunities
+  - name: Community Discussions
+    url: https://github.com/nekuda-ai/nekuda-agent-copilot-demo/discussions
+    about: Ask questions and discuss ideas with the community

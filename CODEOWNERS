@@ -1,0 +1,6 @@
+# This file defines who owns specific files or directories in this repository.
+# These owners will be automatically requested for review when someone
+# opens a pull request that modifies code they own.
+
+# Default owners for everything in the repo
+* @nekuda-ai/nekuda-eng

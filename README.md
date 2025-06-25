@@ -1,7 +1,9 @@
 # nekuda Shopping Agent Demo
-![twitter cover (1)](https://github.com/user-attachments/assets/a5eba1c5-7d59-4711-906f-fd2125713c77)
+![nekuda-logo](https://github.com/user-attachments/assets/a5eba1c5-7d59-4711-906f-fd2125713c77)
 
-A commerce agent using the **nekuda SDK** to store credit cards and complete checkouts in the nekuda merchandise store. You can run it in under 2 minutes and see a full end-to-end example of an agent completing checkouts with a credit card using nekuda. 
+A commerce agent using the **nekuda SDK** to store credit cards and complete checkouts in the nekuda merchandise store. You can run it in under 2 minutes and see a full end-to-end example of an agent completing checkouts with a credit card using nekuda.
+
+📚 **to learn more about nekuda SDK documentation, visit [docs.nekuda.ai](https://docs.nekuda.ai)**
 
 If you’re building agents, you can use this code as a template to embed agentic payments in your agent.
 
@@ -9,17 +11,17 @@ If you’re building agents, you can use this code as a template to embed agenti
 
 ## Features
 ### 🤖 AI Shopping Assistant
-- **Chat Shopping**: Browse and add items via chat  
-- **CopilotKit**: AI actions for smoother UX  
-- **Smart Search**: Find by name, description, or category  
+- **Chat Shopping**: Browse and add items via chat
+- **CopilotKit**: AI actions for smoother UX
+- **Smart Search**: Find by name, description, or category
 - **Cart Control**: Add, remove, or view items via chat
 
 ### 💳 Payment System
-- **Credit Card Handling**: Collect credit cards with [nekuda SDK](https://docs.nekuda.ai/introduction). Stores transactions and data in the [nekuda dashboard](https://app.nekuda.ai/dashboard).  
+- **Credit Card Handling**: Collect credit cards with [nekuda SDK](https://docs.nekuda.ai/introduction). Stores transactions and data in the [nekuda dashboard](https://app.nekuda.ai/dashboard).
 - **Checkout Agent**: Cart is sent as a payment intent to a browser agent that completes the purchase.
 
 ## 🏗️ Architecture
-- **Modular Design**: Frontend, backend, and checkout are decoupled.  
+- **Modular Design**: Frontend, backend, and checkout are decoupled.
 
 
 ```
@@ -42,9 +44,9 @@ If you’re building agents, you can use this code as a template to embed agenti
 - **Node.js** (v18 or higher)
 - **Python** (v3.8 or higher)
 - **Git**
-- **nekuda API key** (from [nekuda](https://nekuda.ai))
-- **CopilotKit API key** (from [copilotkit](https://www.copilotkit.ai/))
-- **OpenAI API key**
+- **nekuda API keys** (from [app.nekuda.ai](https://app.nekuda.ai))
+- **CopilotKit API key** (from [cloud.copilotkit.ai](https://cloud.copilotkit.ai/dashboard))
+- **OpenAI API key** (from [platform.openai.com](https://platform.openai.com))
 
 ### ⚡ Super Easy Setup (2 steps)
 
@@ -52,10 +54,10 @@ If you’re building agents, you can use this code as a template to embed agenti
    ```bash
    git clone <repository-url>
    cd nekuda-agent-copilot-demo
-   
+
    # Copy the environment template
    cp .env.example .env
-   
+
    # Edit .env with your nekuda SDK keys
    nano .env  # or use your preferred editor
    ```
@@ -68,7 +70,7 @@ If you’re building agents, you can use this code as a template to embed agenti
 
 **That's it!** 🎉 The script will automatically:
 - ✅ Create Python virtual environment
-- ✅ Install all backend dependencies  
+- ✅ Install all backend dependencies
 - ✅ Install all frontend dependencies
 - ✅ Start all 3 services
 - ✅ Show you the URLs to access
@@ -79,19 +81,46 @@ Edit your `.env` file with your API credentials:
 
 ```env
 # Backend: nekuda SDK Configuration
-NEKUDA_API_KEY=your_nekuda_api_key
+NEKUDA_API_KEY=your_nekuda_api_key          # Private key from app.nekuda.ai
 OPENAI_API_KEY=your_openai_api_key
 
 # Frontend: CopilotKit Configuration (VITE_ prefix required for frontend)
-VITE_NEKUDA_PUBLIC_KEY=your_nekuda_public_key
-VITE_COPILOTKIT_PUBLIC_KEY=your_copilot_key
+VITE_NEKUDA_PUBLIC_KEY=your_nekuda_public_key    # Public key from app.nekuda.ai
+VITE_COPILOTKIT_PUBLIC_KEY=your_copilot_key      # From cloud.copilotkit.ai/dashboard
 
+# Optional: Alternative LLM providers for browser automation
+# ANTHROPIC_API_KEY=your_anthropic_api_key
+# GOOGLE_API_KEY=your_google_api_key
 
 # Optional: Custom ports (defaults shown)
 # PORT_FRONTEND=3000
-# PORT_STORE_API=8000  
+# PORT_STORE_API=8000
 # PORT_CHECKOUT_SERVICE=8001
 ```
+
+#### Where to get your API keys:
+- **nekuda keys**: Go to [app.nekuda.ai](https://app.nekuda.ai)
+  - `VITE_NEKUDA_PUBLIC_KEY`: Your public key (for frontend)
+  - `NEKUDA_API_KEY`: Your private key (for backend)
+- **CopilotKit**: Get from [cloud.copilotkit.ai/dashboard](https://cloud.copilotkit.ai/dashboard)
+- **OpenAI**: Get from [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
+- **Anthropic** (optional): Get from [console.anthropic.com](https://console.anthropic.com)
+- **Google** (optional): Get from [makersuite.google.com/app/apikey](https://makersuite.google.com/app/apikey)
+
+### 🤖 Browser Automation Model Configuration
+
+The checkout browser automation supports multiple LLM providers. To change the model:
+
+1. **Default (OpenAI)** - Works reliably, easy to set up
+2. **Gemini** - Fastest performance in testing
+3. **Anthropic** - Alternative option
+
+To switch models, edit `backend/checkout_service/nekuda_browser_automation.py` line 107:
+```python
+model_type = "gemini"  # Options: "openai", "gemini", "anthropic"
+```
+
+**Note:** Remember to set the corresponding API key in your `.env` file.
 
 ### 🌐 Access the Application
 
@@ -229,7 +258,7 @@ cd frontend && npm run dev
 - `GET /health` - Health check
 - `GET /` - API information
 
-### Checkout Service Endpoints  
+### Checkout Service Endpoints
 - `POST /api/browser-checkout` - Process payment with browser automation
 - `GET /health` - Health check
 
@@ -261,7 +290,7 @@ cp .env.example .env
 # The start script automatically kills conflicting processes
 # But you can manually check:
 lsof -i :3000
-lsof -i :8000  
+lsof -i :8000
 lsof -i :8001
 ```
 

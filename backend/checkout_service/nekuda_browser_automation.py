@@ -103,9 +103,9 @@ async def run_order_automation(order_intent: OrderIntent):
 
     # 2. Setup LLM - Use OpenAI by default, can be changed to "anthropic"
     try:
-        model_type = "gemini"  # Change to "openai" if needed
+        model_type = "openai"  # Change to "openai" if needed
         llm = get_llm_model(model_type)
-        planner_llm = get_llm_model(model_type, is_planner=True)
+        # planner_llm = get_llm_model(model_type, is_planner=True) # to enable planner, uncomment this line
         memory_config = MemoryConfig(
             memory_interval=20,
             vector_store_provider="faiss",
@@ -159,6 +159,7 @@ Steps:
         task=task_prompt,
         llm=llm,
         use_vision=True,
+        # to enable planner, uncomment the following lines
         # planner_llm=planner_llm,
         # use_vision_for_planner=False,
         # planner_interval=4,

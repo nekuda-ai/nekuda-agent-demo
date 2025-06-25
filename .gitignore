@@ -3,4 +3,4 @@
 .vscode
 frontend/node_modules
 frontend/package-lock.json
-test*
+test_*

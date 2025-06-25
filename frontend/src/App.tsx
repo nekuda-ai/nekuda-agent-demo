@@ -1,5 +1,5 @@
 import { CopilotKit } from '@copilotkit/react-core';
-import { CopilotChatContainer } from './components/CopilotChatContainer';
+import { ShoppingLayout } from './components/ShoppingLayout';
 
 function App() {
   console.log("App component rendering");
@@ -9,7 +9,7 @@ function App() {
       <CopilotKit
         publicApiKey={import.meta.env.VITE_COPILOTKIT_PUBLIC_KEY}
       >
-        <CopilotChatContainer />
+        <ShoppingLayout />
       </CopilotKit>
     </div>
   );

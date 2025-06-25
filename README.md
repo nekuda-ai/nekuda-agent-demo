@@ -1,4 +1,4 @@
-# 🛍️ nekuda Shopping Agent Demo
+# nekuda Shopping Agent Demo
 ![twitter cover (1)](https://github.com/user-attachments/assets/a5eba1c5-7d59-4711-906f-fd2125713c77)
 
 A commerce agent using the **nekuda SDK** to store credit cards and complete checkouts in the nekuda merchandise store. You can run it in under 2 minutes and see a full end-to-end example of an agent completing checkouts with a credit card using nekuda. 
@@ -7,7 +7,7 @@ If you’re building agents, you can use this code as a template to embed agenti
 
 **Feedback welcome: founders@nekuda.ai**
 
-## 🌟 Features
+## Features
 ### 🤖 AI Shopping Assistant
 - **Chat Shopping**: Browse and add items via chat  
 - **CopilotKit**: AI actions for smoother UX  
@@ -15,11 +15,12 @@ If you’re building agents, you can use this code as a template to embed agenti
 - **Cart Control**: Add, remove, or view items via chat
 
 ### 💳 Payment System
-- **Credit Card Handling**: Collect and reuse cards with [nekuda SDK](https://docs.nekuda.ai/introduction). Stores transactions and data in the [nekuda dashboard](https://app.nekuda.ai/dashboard).  
-- **Modular Design**: Frontend, backend, and checkout are decoupled.  
+- **Credit Card Handling**: Collect credit cards with [nekuda SDK](https://docs.nekuda.ai/introduction). Stores transactions and data in the [nekuda dashboard](https://app.nekuda.ai/dashboard).  
 - **Checkout Agent**: Cart is sent as a payment intent to a browser agent that completes the purchase.
 
 ## 🏗️ Architecture
+- **Modular Design**: Frontend, backend, and checkout are decoupled.  
+
 
 ```
 ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
@@ -127,13 +128,6 @@ Try these natural language commands with the AI assistant:
 - *"Complete my purchase"*
 - *"Checkout now"*
 - *"Buy these items"*
-
-### 🛍️ Available Products
-
-- **nekuda T-Shirt** - Premium cotton t-shirt with nekuda logo ($10)
-- **nekuda Hoodie** - Comfortable fleece hoodie ($18)
-- **nekuda Hat** - Stylish nekuda hat ($12)
-- **nekuda Beanie** - Cozy nekuda beanie ($12)
 
 ## 🔧 Technical Details
 

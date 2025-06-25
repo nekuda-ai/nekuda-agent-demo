@@ -1,6 +1,7 @@
 # 🛍️ nekuda AI Shopping Assistant Demo
+![twitter cover (1)](https://github.com/user-attachments/assets/a5eba1c5-7d59-4711-906f-fd2125713c77)
 
-A commerce agent using the **nekuda SDK** to store credit cards and complete checkouts. You can run it in under 2 minutes and see a full end-to-end example of an agent completing checkouts with a credit card using nekuda. 
+A commerce agent using the **nekuda SDK** to store credit cards and complete checkouts in the nekuda merchandise store. You can run it in under 2 minutes and see a full end-to-end example of an agent completing checkouts with a credit card using nekuda. 
 
 If you’re building agents, you can use this code as a template to embed agentic payments in your agent.
 
@@ -244,17 +245,10 @@ cd frontend && npm run dev
 - Uses test credentials for nekuda SDK
 - Not intended for production use without proper security measures
 
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
 
 ## 📝 License
 
-This project is for demonstration purposes. Please check with the maintainers for licensing details.
+This project is licensed under the MIT License.
 
 ## 🆘 Troubleshooting
 
@@ -290,14 +284,6 @@ npm --version
 chmod +x run_scripts/start-all.sh
 ```
 
-## 📞 Support
-
-For issues or questions:
-1. Check the troubleshooting section above
-2. Ensure your `.env` file has valid nekuda SDK credentials
-3. Verify Python 3.8+ and Node.js 18+ are installed
-4. Review console logs for specific error details
 
 ---
 
-**Happy Shopping with AI! 🛍️✨**

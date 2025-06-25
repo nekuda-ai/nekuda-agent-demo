@@ -1,4 +1,4 @@
-# 🛍️ nekuda AI Shopping Agent Demo
+# 🛍️ nekuda Shopping Agent Demo
 ![twitter cover (1)](https://github.com/user-attachments/assets/a5eba1c5-7d59-4711-906f-fd2125713c77)
 
 A commerce agent using the **nekuda SDK** to store credit cards and complete checkouts in the nekuda merchandise store. You can run it in under 2 minutes and see a full end-to-end example of an agent completing checkouts with a credit card using nekuda. 

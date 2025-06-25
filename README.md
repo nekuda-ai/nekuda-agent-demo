@@ -14,7 +14,7 @@ If you’re building agents, you can use this code as a template to embed agenti
 - **Cart Control**: Add, remove, or view items via chat
 
 ### 💳 Payment System
-- **Credit Card Handling**: Collect and reuse cards with [nekuda SDK](https://docs.nekuda.ai/introduction), no PCI scope. Stores transactions and data in the [nekuda dashboard](https://app.nekuda.ai/dashboard).  
+- **Credit Card Handling**: Collect and reuse cards with [nekuda SDK](https://docs.nekuda.ai/introduction). Stores transactions and data in the [nekuda dashboard](https://app.nekuda.ai/dashboard).  
 - **Modular Design**: Frontend, backend, and checkout are decoupled.  
 - **Checkout Agent**: Cart is sent as a payment intent to a browser agent that completes the purchase.
 

@@ -5,7 +5,7 @@ A commerce agent using the **nekuda SDK** to store credit cards and complete che
 
 📚 **to learn more about nekuda SDK documentation, visit [docs.nekuda.ai](https://docs.nekuda.ai)**
 
-If you’re building agents, you can use this code as a template to embed agentic payments in your agent.
+If you're building agents, you can use this code as a template to embed agentic payments in your agent.
 
 **Feedback welcome: founders@nekuda.ai**
 
@@ -307,6 +307,15 @@ npm --version
 chmod +x run_scripts/start-all.sh
 ```
 
+---
+
+**Happy Shopping with AI! 🛍️✨**
 
 ---
+
+## Disclaimer
+
+This is a technology demonstration for educational purposes only. Use at your own risk. nekuda provides no warranties or support for this demo. You are responsible for your own use of this code and any consequences thereof.
+
+For complete terms, see [TERMS_OF_USE.md](TERMS_OF_USE.md).
 

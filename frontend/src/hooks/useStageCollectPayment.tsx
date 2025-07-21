@@ -1,5 +1,4 @@
 import { useCopilotAction, useCopilotAdditionalInstructions } from '@copilotkit/react-core';
-import React from 'react';
 import { WalletWidget } from '../components/WalletWidget';
 import { useGlobalState } from './useGlobalState';
 import { saveWalletToken, getWalletToken } from '../utils/walletState';
@@ -25,7 +24,7 @@ export function useStageCollectPayment() {
       parameters: [],
       renderAndWaitForResponse: ({ respond, status }) => {
         if (status !== "executing") {
-          return null;
+          return <></>;
         }
 
         // Check if we already have a payment token

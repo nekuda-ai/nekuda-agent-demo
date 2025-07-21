@@ -3,8 +3,8 @@ uvicorn>=0.24.0
 pydantic>=2.5.0
 requests>=2.31.0
 python-multipart>=0.0.6
-nekuda
-browser-use >= 0.3.2
+nekuda==0.2.8
+browser-use == 0.3.2
 browser-use[memory]
 playwright
 pillow

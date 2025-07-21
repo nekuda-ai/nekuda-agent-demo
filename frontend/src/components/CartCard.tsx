@@ -23,7 +23,7 @@ export const CartCard: React.FC<CartCardProps> = ({
     items, 
     total, 
     onRemoveItem, 
-    onUpdateQuantity,
+    onUpdateQuantity: _onUpdateQuantity,
     onCheckout,
     showCheckoutButton = true 
 }) => {

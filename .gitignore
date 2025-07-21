@@ -2,4 +2,9 @@
 .venv
 .vscode
 frontend/node_modules
+frontend/build
+frontend/dist
 test_*
+__pycache__/
+*.py[cod]
+*$py.class

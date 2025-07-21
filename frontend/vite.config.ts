@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import path from 'path';
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -21,4 +22,12 @@ export default defineConfig({
     },
     // To handle JSON imports like the Lottie animation
     assetsInclude: ['**/*.json'],
+    optimizeDeps: {
+        exclude: ['react-svg-credit-card-payment-icons']
+    },
+    resolve: {
+        alias: {
+            'react-svg-credit-card-payment-icons': path.resolve(__dirname, 'src/stubs/react-svg-credit-card-payment-icons.js')
+        }
+    }
 }); 

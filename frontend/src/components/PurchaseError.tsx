@@ -1,4 +1,3 @@
-import React from 'react';
 import { PurchaseError as PurchaseErrorType } from '../utils/errorHandlers';
 
 interface PurchaseErrorProps {

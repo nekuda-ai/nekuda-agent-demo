@@ -19,9 +19,21 @@ export default defineConfig({
     },
     build: {
         outDir: 'build', // Output directory for production build (defaults to dist)
+        commonjsOptions: {
+            transformMixedEsModules: true,
+        },
+        rollupOptions: {
+            onwarn(warning, warn) {
+                // Suppress certain warnings
+                if (warning.code === 'CIRCULAR_DEPENDENCY') return;
+                if (warning.code === 'THIS_IS_UNDEFINED') return;
+                warn(warning);
+            }
+        }
     },
-    // To handle JSON imports like the Lottie animation
-    assetsInclude: ['**/*.json'],
+    define: {
+        global: 'globalThis',
+    },
     optimizeDeps: {
         exclude: ['react-svg-credit-card-payment-icons']
     },

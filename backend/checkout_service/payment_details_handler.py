@@ -8,11 +8,9 @@ browser agent before processing payment details.
 """
 
 import logging
-from typing import Dict, Optional
 from pydantic import BaseModel, Field
 from browser_use import Controller, ActionResult
 from nekuda import NekudaClient, MandateData
-import os
 
 logger = logging.getLogger(__name__)
 

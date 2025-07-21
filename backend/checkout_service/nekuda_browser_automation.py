@@ -34,11 +34,11 @@ def get_llm_model(model_type="openai", is_planner=False):
 
         if is_planner:
             return ChatOpenAI(
-                model="gpt-4o", temperature=0, max_tokens=1000, timeout=15
+                model="gpt-4o", temperature=0, timeout=15
             )
         else:
             return ChatOpenAI(
-                model="gpt-4o-2024-08-06", temperature=0, max_tokens=4000, timeout=30
+                model="gpt-4o-2024-08-06", temperature=0, timeout=30
             )
     elif model_type.lower() == "anthropic":
         if not os.getenv("ANTHROPIC_API_KEY"):
@@ -79,7 +79,7 @@ async def run_order_automation(order_intent: OrderIntent):
     if not os.getenv("NEKUDA_API_KEY"):
         raise ValueError("NEKUDA_API_KEY environment variable not set")
 
-    nekuda_base_url = os.getenv("NEKUDA_BASE_URL", "http://localhost:8080")
+    nekuda_base_url = os.getenv("NEKUDA_BASE_URL", "https://api.nekuda.ai")
     logger.debug(f"Using NEKUDA_BASE_URL: {nekuda_base_url}")
 
     controller = Controller()

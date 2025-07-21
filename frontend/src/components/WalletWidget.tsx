@@ -89,6 +89,7 @@ export const WalletWidget: React.FC<WalletWidgetProps> = ({ isOpen = true, onClo
         }
     };
 
+
     const handleNekudaError = (errorInfo: any) => {
         console.error('Nekuda error:', errorInfo);
         const errorMessage = errorInfo.validationError?.userMessage || errorInfo.apiError?.userMessage || 'Unknown error';

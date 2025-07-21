@@ -2,7 +2,7 @@ import { useCopilotAction, useCopilotAdditionalInstructions } from '@copilotkit/
 import React from 'react';
 import { WalletWidget } from '../components/WalletWidget';
 import { useGlobalState } from './useGlobalState';
-import { saveWalletToken, getWalletToken } from '../utils/walletState';
+import { saveWalletToken, getWalletToken, isValidPaymentToken } from '../utils/walletState';
 
 export function useStageCollectPayment() {
   const { stage, setStage, setPaymentToken, paymentToken } = useGlobalState();
@@ -30,7 +30,7 @@ export function useStageCollectPayment() {
 
         // Check if we already have a payment token
         const existingToken = getWalletToken() || paymentToken;
-        if (existingToken && existingToken !== '' && existingToken !== 'token_placeholder') {
+        if (isValidPaymentToken(existingToken)) {
           // Payment already exists, automatically move to next stage
           setTimeout(() => {
             respond("Payment information already exists");

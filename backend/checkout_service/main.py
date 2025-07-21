@@ -1,7 +1,6 @@
 """Checkout Service API for Nekuda SDK browser automation demo."""
 import uvicorn
 import uuid
-import json
 from typing import Dict, Optional
 from datetime import datetime
 from fastapi import FastAPI, HTTPException, BackgroundTasks

@@ -1,7 +1,7 @@
 import { useCopilotAction, useCopilotAdditionalInstructions, useCopilotChat } from '@copilotkit/react-core';
 import { useGlobalState } from './useGlobalState';
 import { getWalletToken, clearWalletToken, isValidPaymentToken } from '../utils/walletState';
-import { classifyError, getErrorMessage, formatErrorForHistory } from '../utils/errorHandlers';
+import { classifyError, getErrorMessage } from '../utils/errorHandlers';
 import { useCart } from '../components/ShoppingLayout';
 
 export function useStageCompletePurchase() {
@@ -34,7 +34,7 @@ export function useStageCompletePurchase() {
             </div>
           );
         }
-        return null;
+        return <></>;
       },
       handler: async () => {
         if (cartItems.length === 0) {
@@ -57,7 +57,7 @@ export function useStageCompletePurchase() {
           // Extract human messages (only user text messages)
           const humanMessages = visibleMessages
             .filter(msg => msg.isTextMessage() && msg.role === 'user')
-            .map(msg => msg.content);
+            .map(msg => (msg as any).content);
 
           // Build conversation context for mandate
           const conversationContext = {
@@ -68,7 +68,7 @@ export function useStageCompletePurchase() {
                 return {
                   type: 'text',
                   role: msg.role,
-                  content: msg.content,
+                  content: (msg as any).content,
                   timestamp: msg.createdAt
                 };
               } else if (msg.isActionExecutionMessage()) {

@@ -13,7 +13,12 @@ export default defineConfig({
     },
     optimizeDeps: {
         exclude: [
-            'react-svg-credit-card-payment-icons'
+            'react-svg-credit-card-payment-icons',
+            'refractor',
+            'character-entities',
+            'character-entities-legacy',
+            'character-entities-html4',
+            'character-reference-invalid'
         ]
     },
     server: {
@@ -29,6 +34,19 @@ export default defineConfig({
     },
     build: {
         outDir: 'build', // Output directory for production build (defaults to dist)
+        rollupOptions: {
+            external: (id) => {
+                // Exclude unused transitive dependencies from @copilotkit/react-ui
+                // that have corrupted JSON files and cause build failures
+                // These come from react-syntax-highlighter which we don't use
+                return id.includes('refractor') || 
+                       id.includes('character-entities') || 
+                       id.includes('character-reference-invalid') ||
+                       id.includes('tr46') ||
+                       id.includes('node-fetch') ||
+                       id.includes('whatwg-url');
+            }
+        }
     },
     // To handle JSON imports like the Lottie animation
     assetsInclude: ['**/*.json'],

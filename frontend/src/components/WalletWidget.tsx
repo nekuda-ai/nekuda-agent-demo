@@ -13,7 +13,7 @@ interface WalletFormProps {
     variant?: 'modal' | 'inline';
 }
 
-const WalletForm: React.FC<WalletFormProps> = ({ onSuccess, onClose, variant = 'modal' }) => {
+const WalletForm: React.FC<WalletFormProps> = ({ onSuccess: _onSuccess, onClose, variant = 'modal' }) => {
     const [succeeded, setSucceeded] = useState(false);
 
     const handlePaymentSave = (formData: any) => {

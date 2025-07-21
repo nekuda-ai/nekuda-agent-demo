@@ -32,7 +32,7 @@ export function ShoppingCart() {
     const cartItems = cartContext?.cartItems || localCartItems;
     const setCartItems = cartContext?.setCartItems || setLocalCartItems;
 
-    const [purchaseHistory, setPurchaseHistory] = useState<string[]>([]);
+    const [purchaseHistory, _setPurchaseHistory] = useState<string[]>([]);
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);

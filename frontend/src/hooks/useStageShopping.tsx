@@ -1,6 +1,6 @@
 import { useCopilotAction, useCopilotAdditionalInstructions } from '@copilotkit/react-core';
 import { useGlobalState } from './useGlobalState';
-import { getWalletToken } from '../utils/walletState';
+import { getWalletToken, isValidPaymentToken } from '../utils/walletState';
 import { useCart } from '../components/ShoppingLayout';
 
 export function useStageShopping() {
@@ -30,7 +30,7 @@ export function useStageShopping() {
 
         // Check if we already have payment information
         const existingToken = getWalletToken() || paymentToken;
-        const hasValidToken = existingToken && existingToken !== '' && existingToken !== 'token_placeholder';
+        const hasValidToken = isValidPaymentToken(existingToken);
 
         if (hasValidToken) {
           // We have payment, go directly to purchase

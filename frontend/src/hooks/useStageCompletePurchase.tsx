@@ -1,6 +1,6 @@
 import { useCopilotAction, useCopilotAdditionalInstructions, useCopilotChat } from '@copilotkit/react-core';
 import { useGlobalState } from './useGlobalState';
-import { getWalletToken, clearWalletToken } from '../utils/walletState';
+import { getWalletToken, clearWalletToken, isValidPaymentToken } from '../utils/walletState';
 import { classifyError, getErrorMessage } from '../utils/errorHandlers';
 import { useCart } from '../components/ShoppingLayout';
 
@@ -43,9 +43,9 @@ export function useStageCompletePurchase() {
         }
 
         // Get the payment token
-        const token = paymentToken || getWalletToken();
+        const token = getWalletToken() || paymentToken;
         
-        if (!token || token === '' || token === 'token_placeholder') {
+        if (!isValidPaymentToken(token)) {
           setStage("collectPayment");
           return "Payment information is missing. Please provide payment details.";
         }

@@ -23,3 +23,11 @@ export const clearWalletToken = (): void => {
 export const hasWalletToken = (): boolean => {
     return getWalletToken() !== null;
 };
+
+export const isValidPaymentToken = (token: string | null | undefined): boolean => {
+    if (!token || typeof token !== 'string' || token.trim() === '' || token === 'token_placeholder') {
+        return false;
+    }
+    
+    return token.length >= 10;
+};

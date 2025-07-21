@@ -1,10 +1,9 @@
-fastapi>=0.104.1
-uvicorn>=0.24.0
-pydantic>=2.5.0
-requests>=2.31.0
-python-multipart>=0.0.6
-nekuda
-browser-use >= 0.3.2
-browser-use[memory]
-playwright
-pillow
+fastapi==0.116.1
+uvicorn==0.35.0
+pydantic==2.11.7
+requests==2.32.4
+python-multipart==0.0.20
+nekuda==0.2.8
+browser-use==0.5.5
+playwright==1.53.0
+pillow==11.3.0

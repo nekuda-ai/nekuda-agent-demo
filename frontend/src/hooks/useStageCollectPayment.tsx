@@ -3,6 +3,7 @@ import React from 'react';
 import { WalletWidget } from '../components/WalletWidget';
 import { useGlobalState } from './useGlobalState';
 import { saveWalletToken, getWalletToken } from '../utils/walletState';
+import { CURRENT_USER_ID } from '../utils/constants';
 
 export function useStageCollectPayment() {
   const { stage, setStage, setPaymentToken, paymentToken } = useGlobalState();
@@ -28,8 +29,8 @@ export function useStageCollectPayment() {
           return null;
         }
 
-        // Check if we already have a payment token
-        const existingToken = getWalletToken() || paymentToken;
+        // Check if we already have a payment token using centralized userId
+        const existingToken = getWalletToken(CURRENT_USER_ID) || paymentToken;
         if (existingToken && existingToken !== '' && existingToken !== 'token_placeholder') {
           // Payment already exists, automatically move to next stage
           setTimeout(() => {
@@ -47,9 +48,9 @@ export function useStageCollectPayment() {
         return (
           <WalletWidget
             variant="inline"
-            onSuccess={(cardTokenId) => {
-              console.log('Payment collected:', cardTokenId);
-              saveWalletToken(cardTokenId);
+            onSuccess={(cardTokenId, userId) => {
+              console.log('Payment collected:', cardTokenId, 'for user:', userId);
+              saveWalletToken(userId, cardTokenId);
               setPaymentToken(cardTokenId);
               respond("Payment information collected successfully");
               setStage("completePurchase"); // Automatically move to purchase stage

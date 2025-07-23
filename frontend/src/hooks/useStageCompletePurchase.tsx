@@ -3,6 +3,7 @@ import { useGlobalState } from './useGlobalState';
 import { getWalletToken, clearWalletToken } from '../utils/walletState';
 import { classifyError, getErrorMessage, formatErrorForHistory } from '../utils/errorHandlers';
 import { useCart } from '../components/ShoppingLayout';
+import { CURRENT_USER_ID } from '../utils/constants';
 
 export function useStageCompletePurchase() {
   const { stage, setStage, paymentToken, setPaymentToken, setLastPurchaseResult, setLastError } = useGlobalState();
@@ -43,7 +44,7 @@ export function useStageCompletePurchase() {
         }
 
         // Get the payment token
-        const token = paymentToken || getWalletToken();
+        const token = paymentToken || getWalletToken(CURRENT_USER_ID);
         
         if (!token || token === '' || token === 'token_placeholder') {
           setStage("collectPayment");
@@ -158,7 +159,7 @@ export function useStageCompletePurchase() {
               // Clear cart and payment token
               setCartItems([]);
               setPaymentToken(null);
-              clearWalletToken();
+              clearWalletToken(CURRENT_USER_ID);
               
               // Store result and go back to shopping
               setLastPurchaseResult(result);

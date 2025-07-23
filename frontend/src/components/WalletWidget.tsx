@@ -6,6 +6,8 @@ import {
     NekudaPaymentForm
 } from '@nekuda/dev-react-nekuda-js';
 import { useClickOutside } from '../hooks/useClickOutside';
+import { saveWalletToken } from '../utils/walletState';
+import { CURRENT_USER_ID } from '../utils/constants';
 
 interface WalletFormProps {
     onSuccess: (cardTokenId: string) => void;
@@ -25,6 +27,8 @@ const WalletForm: React.FC<WalletFormProps> = ({ onSuccess, onClose, variant = '
         const tokenId = formData.id || formData.cardTokenId;
         
         if (tokenId) {
+            // Save token to localStorage with userId
+            saveWalletToken(CURRENT_USER_ID, tokenId);
             setProcessing(false);
             setSucceeded(true);
             setError(null);
@@ -86,7 +90,7 @@ const WalletForm: React.FC<WalletFormProps> = ({ onSuccess, onClose, variant = '
 interface WalletWidgetProps {
     isOpen?: boolean;
     onClose?: () => void;
-    onSuccess?: (cardTokenId: string) => void;
+    onSuccess?: (cardTokenId: string, userId: string) => void;
     variant?: 'modal' | 'inline';
 }
 
@@ -98,12 +102,12 @@ export const WalletWidget: React.FC<WalletWidgetProps> = ({ isOpen = true, onClo
     } else if (variant === 'inline') {
         console.log('🎯 WalletWidget inline rendering');
     }
-    const userId = 'test_user_123';
+    const userId = CURRENT_USER_ID;
 
     const handleSuccess = (cardTokenId: string) => {
         console.log('Wallet interaction successful with cardTokenId:', cardTokenId);
         if (onSuccess) {
-            onSuccess(cardTokenId);
+            onSuccess(cardTokenId, userId);
         }
         if (onClose && variant === 'modal') {
             onClose();

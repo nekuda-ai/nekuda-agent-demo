@@ -2,6 +2,7 @@ import { useCopilotAction, useCopilotAdditionalInstructions } from '@copilotkit/
 import { useGlobalState } from './useGlobalState';
 import { getWalletToken } from '../utils/walletState';
 import { useCart } from '../components/ShoppingLayout';
+import { CURRENT_USER_ID } from '../utils/constants';
 
 export function useStageShopping() {
   const { stage, setStage, paymentToken } = useGlobalState();
@@ -29,7 +30,7 @@ export function useStageShopping() {
         }
 
         // Check if we already have payment information
-        const existingToken = getWalletToken() || paymentToken;
+        const existingToken = getWalletToken(CURRENT_USER_ID) || paymentToken;
         const hasValidToken = existingToken && existingToken !== '' && existingToken !== 'token_placeholder';
 
         if (hasValidToken) {

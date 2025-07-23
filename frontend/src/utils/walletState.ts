@@ -1,25 +1,40 @@
 // Wallet state management utilities
-export const walletStateKey = 'nekuda_wallet_token';
+const getUserWalletKey = (userId: string) => `nekuda_wallet_token_${userId}`;
 
-export const saveWalletToken = (token: string): void => {
+export const saveWalletToken = (userId: string, token: string): void => {
     if (typeof window !== 'undefined') {
-        sessionStorage.setItem(walletStateKey, token);
+        localStorage.setItem(getUserWalletKey(userId), token);
     }
 };
 
-export const getWalletToken = (): string | null => {
+export const getWalletToken = (userId: string): string | null => {
     if (typeof window !== 'undefined') {
-        return sessionStorage.getItem(walletStateKey);
+        return localStorage.getItem(getUserWalletKey(userId));
     }
     return null;
 };
 
-export const clearWalletToken = (): void => {
+export const clearWalletToken = (userId: string): void => {
     if (typeof window !== 'undefined') {
-        sessionStorage.removeItem(walletStateKey);
+        localStorage.removeItem(getUserWalletKey(userId));
     }
 };
 
-export const hasWalletToken = (): boolean => {
-    return getWalletToken() !== null;
+export const hasWalletToken = (userId: string): boolean => {
+    return getWalletToken(userId) !== null;
+};
+
+// Check for existing saved cards and populate localStorage
+export const checkAndSaveExistingCards = async (userId: string, apiService: any): Promise<void> => {
+    try {
+        const cards = await apiService.getAllCards(userId);
+        if (cards && cards.length > 0) {
+            // Save indication that user has cards (use default card ID or first card)
+            const defaultCard = cards.find((card: any) => card.isDefault) || cards[0];
+            saveWalletToken(userId, defaultCard.id);
+            console.log('Found existing cards for user, saved to localStorage:', defaultCard.id);
+        }
+    } catch (error) {
+        console.log('No existing cards found for user:', userId);
+    }
 };

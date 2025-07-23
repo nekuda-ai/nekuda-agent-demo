@@ -22,22 +22,29 @@ stored_purchase_intent = None
 
 class RuntimeMandateUpdate(BaseModel):
     """Runtime updates for mandate data from browser agent"""
+
     product: str = Field(description="Exact product name from checkout page")
     price: float = Field(description="Total price from checkout page")
-    confidence_score: float = Field(default=1.0, ge=0.0, le=1.0,
-                           description="Agent confidence (0-1) that this is correct")
+    confidence_score: float = Field(
+        default=1.0,
+        ge=0.0,
+        le=1.0,
+        description="Agent confidence (0-1) that this is correct",
+    )
 
 
 def store_purchase_intent(purchase_intent_data: dict):
     """Store purchase intent from frontend for later use"""
     global stored_purchase_intent
     stored_purchase_intent = purchase_intent_data
-    logger.info(f"Stored purchase intent for user: {purchase_intent_data.get('user_id')}")
+    logger.info(
+        f"Stored purchase intent for user: {purchase_intent_data.get('user_id')}"
+    )
 
 
 def get_nekuda_client():
     """Initialize and return the NekudaClient instance.
-    
+
     Returns:
         NekudaClient: Configured client instance or None if initialization fails.
     """
@@ -63,27 +70,29 @@ def add_payment_handler(controller: Controller):
         if not nekuda_client:
             return ActionResult(
                 extracted_content="ERROR: NekudaClient not initialized",
-                error="NekudaClient not initialized"
+                error="NekudaClient not initialized",
             )
 
         if not stored_purchase_intent:
             return ActionResult(
                 extracted_content="ERROR: No purchase intent stored",
-                error="No purchase intent found"
+                error="No purchase intent found",
             )
 
         try:
             # 1. Update mandate data with runtime information
-            mandate_dict = stored_purchase_intent['mandate_data'].copy()
-            mandate_dict['product'] = update.product
-            mandate_dict['price'] = update.price
-            mandate_dict['confidence_score'] = update.confidence_score
+            mandate_dict = stored_purchase_intent["mandate_data"].copy()
+            mandate_dict["product"] = update.product
+            mandate_dict["price"] = update.price
+            mandate_dict["confidence_score"] = update.confidence_score
 
             # Create MandateData instance
             mandate_data = MandateData(**mandate_dict)
 
-            user_id = stored_purchase_intent['user_id']
-            logger.debug(f"Processing payment for user {user_id}, product: {update.product}, price: ${update.price}")
+            user_id = stored_purchase_intent["user_id"]
+            logger.debug(
+                f"Processing payment for user {user_id}, product: {update.product}, price: ${update.price}"
+            )
 
             # 2. Create mandate
             user_api = nekuda_client.user(user_id)
@@ -97,7 +106,7 @@ def add_payment_handler(controller: Controller):
 
             # 3. Get card reveal token
             token_data = user_api.request_card_reveal_token(mandate_id)
-            reveal_token = token_data.reveal_token
+            reveal_token = token_data.token
 
             if not reveal_token:
                 raise Exception("No reveal_token returned")
@@ -108,8 +117,12 @@ def add_payment_handler(controller: Controller):
             card_details = user_api.reveal_card_details(reveal_token)
 
             # Format expiry date
-            expiry_date = card_details.card_expiry_date
-            if expiry_date and "/" in expiry_date and len(expiry_date.split("/")[1]) == 4:
+            expiry_date = card_details.card_exp
+            if (
+                expiry_date
+                and "/" in expiry_date
+                and len(expiry_date.split("/")[1]) == 4
+            ):
                 month, year = expiry_date.split("/")
                 expiry_date = f"{month}/{year[-2:]}"
 
@@ -119,7 +132,7 @@ def add_payment_handler(controller: Controller):
                 f"Card Number: {card_details.card_number}\n"
                 f"Expiry: {expiry_date}\n"
                 f"CVV: {card_details.card_cvv or '123'}\n"
-                f"Name: {card_details.cardholder_name}\n"
+                f"Name: {card_details.card_holder}\n"
                 f"Email: {card_details.email}\n"
                 f"Phone: {card_details.phone_number}\n"
                 f"Address: {card_details.billing_address}\n"
@@ -129,17 +142,11 @@ def add_payment_handler(controller: Controller):
             )
 
             logger.debug("Successfully retrieved all payment details")
-            return ActionResult(
-                extracted_content=payment_info,
-                include_in_memory=True
-            )
+            return ActionResult(extracted_content=payment_info, include_in_memory=True)
 
         except Exception as e:
             error_msg = f"Error getting payment details: {str(e)}"
             logger.error(error_msg)
-            return ActionResult(
-                extracted_content=error_msg,
-                error=error_msg
-            )
+            return ActionResult(extracted_content=error_msg, error=error_msg)
 
     logger.info("Registered action: Get Nekuda Payment Details")

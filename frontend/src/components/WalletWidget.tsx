@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import {
     NekudaWalletProvider,
     NekudaPaymentForm
-} from '@nekuda/dev-react-nekuda-js';
+} from '@nekuda/react-nekuda-js';
 import { useClickOutside } from '../hooks/useClickOutside';
 import { saveWalletToken } from '../utils/walletState';
 import { CURRENT_USER_ID } from '../utils/constants';
@@ -22,10 +22,10 @@ const WalletForm: React.FC<WalletFormProps> = ({ onSuccess, onClose, variant = '
 
     const handlePaymentSave = async (formData: any) => {
         console.log('Payment saved via coordinator:', formData);
-        
+
         // Extract token ID from coordinator response
         const tokenId = formData.id || formData.cardTokenId;
-        
+
         if (tokenId) {
             // Save token to localStorage with userId
             saveWalletToken(CURRENT_USER_ID, tokenId);
@@ -125,7 +125,7 @@ export const WalletWidget: React.FC<WalletWidgetProps> = ({ isOpen = true, onClo
 
     // Don't render if not open (for modal variant)
     if (variant === 'modal' && !isOpen) return null;
-    
+
     // Render inline variant (for chat)
     if (variant === 'inline') {
         return (
@@ -137,7 +137,7 @@ export const WalletWidget: React.FC<WalletWidgetProps> = ({ isOpen = true, onClo
             </NekudaWalletProvider>
         );
     }
-    
+
     // Render modal variant (sliding panel from right)
     return (
         <div className="fixed right-4 top-20 z-50 animate-slide-in-right">

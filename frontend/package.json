@@ -13,7 +13,7 @@
         "@copilotkit/react-core": "^1.8.13",
         "@copilotkit/react-ui": "^1.8.13",
         "@copilotkit/runtime": "^1.8.13",
-        "@nekuda/dev-react-nekuda-js": "^0.0.25",
+        "@nekuda/react-nekuda-js": "^0.0.18",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
         "react-lottie": "^1.2.4",

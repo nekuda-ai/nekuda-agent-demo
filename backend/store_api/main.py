@@ -1,7 +1,6 @@
 # Simplified chat service - now that CopilotKit handles everything frontend-only
 import os
 import json
-import asyncio
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -206,8 +205,8 @@ if __name__ == "__main__":
     print("Starting Simplified Chat Service...")
     print("Note: All commerce functionality moved to frontend CopilotKit actions")
     print("Products will be dynamically loaded from https://nekuda-store-frontend.onrender.com/")
-    print(f"Health check: http://localhost:8000/health")
-    print(f"Products API: http://localhost:8000/api/products")
-    print(f"Refresh products: POST http://localhost:8000/api/products/refresh")
+    print("Health check: http://localhost:8000/health")
+    print("Products API: http://localhost:8000/api/products")
+    print("Refresh products: POST http://localhost:8000/api/products/refresh")
 
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

@@ -3,11 +3,11 @@
 import React, { useState } from 'react';
 import {
     NekudaWalletProvider,
-    useNekudaWallet,
     NekudaPaymentForm
 } from '@nekuda/react-nekuda-js';
-import { useCopilotAction } from '@copilotkit/react-core';
 import { useClickOutside } from '../hooks/useClickOutside';
+import { saveWalletToken } from '../utils/walletState';
+import { CURRENT_USER_ID } from '../utils/constants';
 
 interface WalletFormProps {
     onSuccess: (cardTokenId: string) => void;
@@ -19,55 +19,23 @@ const WalletForm: React.FC<WalletFormProps> = ({ onSuccess, onClose, variant = '
     const [processing, setProcessing] = useState(false);
     const [succeeded, setSucceeded] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const { elements } = useNekudaWallet();
 
-    const handleSubmit = async (event: React.MouseEvent) => {
-        event.preventDefault();
-        if (!elements || processing) return;
+    const handlePaymentSave = async (formData: any) => {
+        console.log('Payment saved via coordinator:', formData);
 
-        setProcessing(true);
-        setError(null);
-        setSucceeded(false);
+        // Extract token ID from coordinator response
+        const tokenId = formData.id || formData.cardTokenId;
 
-        try {
-            const result: { success?: boolean; status?: string; id?: string; cardTokenId?: string; message?: string;[key: string]: any } = await elements.submit();
-            console.log('Submission Result (raw object):', result);
-            console.log('Result keys:', Object.keys(result));
-            console.log('Result values:', Object.values(result));
-
-            // Handle different response formats
-            const isSuccess = result.success === true || result.status === "success";
-            const tokenId = result.id || result.cardTokenId;
-
-            if (result && isSuccess) {
-                if (tokenId) {
-                    setSucceeded(true);
-                    setError(null);
-                    onSuccess(tokenId);
-                } else {
-                    // Success but no token ID - this is likely an error
-                    console.error('Success response but no token ID found');
-                    console.log('Full result object:', JSON.stringify(result, null, 2));
-                    
-                    // Generate a mock token for testing purposes
-                    const mockToken = `mock_token_${Date.now()}`;
-                    console.log('Using mock token:', mockToken);
-                    
-                    setSucceeded(true);
-                    setError(null);
-                    onSuccess(mockToken);
-                }
-            } else {
-                console.error('Submission did not report success:', result);
-                setError('Payment submission failed. Please try again.');
-                setSucceeded(false);
-            }
-        } catch (err: any) {
-            console.error('Error during payment submission:', err);
-            setError(err.message || 'Payment submission failed due to an error.');
-            setSucceeded(false);
+        if (tokenId) {
+            // Save token to localStorage with userId
+            saveWalletToken(CURRENT_USER_ID, tokenId);
+            setProcessing(false);
+            setSucceeded(true);
+            setError(null);
+            onSuccess(tokenId);
+        } else {
+            setError('Payment submission failed');
         }
-        setProcessing(false);
     };
 
     return (
@@ -94,7 +62,7 @@ const WalletForm: React.FC<WalletFormProps> = ({ onSuccess, onClose, variant = '
                 )}
             </div>
 
-            <NekudaPaymentForm>
+            <NekudaPaymentForm onSave={handlePaymentSave}>
                 {error && (
                     <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg border border-red-200 text-sm">
                         {error}
@@ -102,7 +70,7 @@ const WalletForm: React.FC<WalletFormProps> = ({ onSuccess, onClose, variant = '
                 )}
 
                 <button
-                    onClick={handleSubmit}
+                    type="submit"
                     disabled={processing || succeeded}
                     className="mt-8 w-full py-3 px-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 shadow-sm disabled:opacity-60 disabled:cursor-not-allowed transition-colors duration-150 ease-in-out"
                 >
@@ -122,23 +90,24 @@ const WalletForm: React.FC<WalletFormProps> = ({ onSuccess, onClose, variant = '
 interface WalletWidgetProps {
     isOpen?: boolean;
     onClose?: () => void;
-    onSuccess?: (cardTokenId: string) => void;
+    onSuccess?: (cardTokenId: string, userId: string) => void;
     variant?: 'modal' | 'inline';
 }
 
 export const WalletWidget: React.FC<WalletWidgetProps> = ({ isOpen = true, onClose, onSuccess, variant = 'modal' }) => {
+
     // Only log when actually visible
     if (variant === 'modal' && isOpen) {
         console.log('🎯 WalletWidget modal opened');
     } else if (variant === 'inline') {
         console.log('🎯 WalletWidget inline rendering');
     }
-    const userId = 'test_user_123';
+    const userId = CURRENT_USER_ID;
 
     const handleSuccess = (cardTokenId: string) => {
         console.log('Wallet interaction successful with cardTokenId:', cardTokenId);
         if (onSuccess) {
-            onSuccess(cardTokenId);
+            onSuccess(cardTokenId, userId);
         }
         if (onClose && variant === 'modal') {
             onClose();
@@ -156,7 +125,7 @@ export const WalletWidget: React.FC<WalletWidgetProps> = ({ isOpen = true, onClo
 
     // Don't render if not open (for modal variant)
     if (variant === 'modal' && !isOpen) return null;
-    
+
     // Render inline variant (for chat)
     if (variant === 'inline') {
         return (
@@ -168,7 +137,7 @@ export const WalletWidget: React.FC<WalletWidgetProps> = ({ isOpen = true, onClo
             </NekudaWalletProvider>
         );
     }
-    
+
     // Render modal variant (sliding panel from right)
     return (
         <div className="fixed right-4 top-20 z-50 animate-slide-in-right">

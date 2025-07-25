@@ -1,4 +1,4 @@
-import React, { useState, useContext, createContext, ReactNode } from 'react';
+import React, { useState, useContext, createContext } from 'react';
 import { CopilotChat } from '@copilotkit/react-ui';
 import '@copilotkit/react-ui/styles.css';
 import './CopilotChatContainer.css';
@@ -33,7 +33,7 @@ export const useCart = () => {
 };
 
 const ShoppingLayoutContent: React.FC = () => {
-    const { stage } = useGlobalState();
+    useGlobalState();
     const [isWalletOpen, setIsWalletOpen] = useState(false);
     const [cartItems, setCartItems] = useState<CartItem[]>([]);
     const [showCartSidebar, setShowCartSidebar] = useState(false);

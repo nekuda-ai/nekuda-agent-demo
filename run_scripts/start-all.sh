@@ -42,6 +42,13 @@ if [ "$CLEAN_INSTALL" = true ]; then
         rm -rf frontend/node_modules
         echo "✅ node_modules directory removed"
     fi
+    if [ -d "frontend/node_modules/.vite" ] || [ -d "frontend/dist" ] || [ -d "frontend/.vite" ]; then
+        echo "🗑️  Removing frontend Vite caches and build files..."
+        rm -rf frontend/node_modules/.vite
+        rm -rf frontend/dist  
+        rm -rf frontend/.vite
+        echo "✅ Frontend Vite caches and build files removed"
+    fi
     echo ""
 fi
 

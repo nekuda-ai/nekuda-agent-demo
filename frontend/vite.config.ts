@@ -19,6 +19,4 @@ export default defineConfig({
     build: {
         outDir: 'build', // Output directory for production build (defaults to dist)
     },
-    // To handle JSON imports like the Lottie animation
-    assetsInclude: ['**/*.json'],
 }); 

@@ -5,7 +5,6 @@ import logging
 from datetime import datetime
 from dotenv import load_dotenv
 from browser_use import Agent, Controller, BrowserSession
-from browser_use.agent.memory import MemoryConfig
 from langchain_openai import ChatOpenAI
 from langchain_anthropic import ChatAnthropic
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -106,12 +105,6 @@ async def run_order_automation(order_intent: OrderIntent):
         model_type = "openai"  # Change to "openai" if needed
         llm = get_llm_model(model_type)
         # planner_llm = get_llm_model(model_type, is_planner=True) # to enable planner, uncomment this line
-        memory_config = MemoryConfig(
-            memory_interval=20,
-            vector_store_provider="faiss",
-            llm_instance=llm,
-            embedder_provider=model_type,
-        )
     except ValueError as e:
         print(f"ERROR: {e}")
         return
@@ -167,7 +160,6 @@ Steps:
         browser_session=browser_session,
         initial_actions=initial_actions,
         message_context=message_context,  # Add detailed context
-        memory_config=memory_config,
         max_failures=5,
         retry_delay=3,
         generate_gif=f"test_nekuda_payment_flow_{datetime.now().strftime('%Y%m%d_%H%M%S')}.gif",

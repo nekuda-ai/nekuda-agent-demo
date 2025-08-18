@@ -19,7 +19,7 @@
         "react-lottie": "^1.2.4",
         "react-syntax-highlighter": "^15.5.0",
         "uuid": "^9.0.1",
-        "vite": "^5.0.2",
+        "vite": "^7.1.2",
         "zustand": "^4.4.1"
     },
     "devDependencies": {
